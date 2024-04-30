@@ -150,9 +150,9 @@
         process: function () {
             var queue = this._queue;
             this._queue = [];
-            while (queue && queue.length) {
-                queue.shift()();
-            }
+            queue.forEach(function(event) {
+                event();
+            });
         },
 
         block: function () {
