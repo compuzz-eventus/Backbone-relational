@@ -78,7 +78,8 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 		var initialize = AnimalCollection.prototype.initialize;
 		var resetEvents = 0,
 			addEvents = 0,
-			removeEvents = 0;
+			removeEvents = 0,
+			updateEvents = 0;
 
 		AnimalCollection.prototype.initialize = function() {
 			this
@@ -90,7 +91,10 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 				})
 				.on( 'remove', function() {
 					removeEvents++;
-				});
+				})
+        .on( 'update', function() {
+          updateEvents++;
+        });
 		};
 
 		var zoo = new Zoo();
@@ -100,11 +104,15 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 		ok( resetEvents === 0, "No `reset` event fired" );
 		ok( addEvents === 0 );
 		ok( removeEvents === 0 );
+    ok( updateEvents === 0 );
 
 		zoo.set( 'animals', { id: 1 } );
 
 		ok( addEvents === 1 );
 		ok( zoo.get( 'animals' ).length === 1, "animals.length === 1" );
+
+    zoo.get( 'animals' ).at(0).set({foo: 'bar'});
+    ok( updateEvents === 1 );
 
 		zoo.get( 'animals' ).reset();
 
