@@ -3,16 +3,22 @@
   "main": "backbone-relational.js",
   "description": "Get and set relations (one-to-one, one-to-many, many-to-one) for Backbone models",
   "homepage": "http://backbonerelational.org",
-  "keywords": ["backbone", "relation", "nested", "model"],
+  "keywords": [
+    "backbone",
+    "relation",
+    "nested",
+    "model"
+  ],
   "repository": {
     "type": "git",
-	"url": "https://github.com/compuzz-eventus/Backbone-relational.git"
+    "url": "https://github.com/compuzz-eventus/Backbone-relational.git"
   },
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
   "dependencies": {
-    "underscore": ">=1.5.0",
-    "backbone": ">=1.1.2"
+    "backbone": ">=1.1.2",
+    "bower": "^1.8.14",
+    "underscore": ">=1.5.0"
   },
   "license": "MIT",
   "version": "0.9.1"
