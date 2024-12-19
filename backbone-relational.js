@@ -1586,95 +1586,95 @@
 			return new this.constructor( attributes );
 		},
 
-		/**
-		 * Convert relations to JSON, omits them when required
-		 */
-		toJSON: function( options ) {
-			// If this Model has already been fully serialized in this branch once, return to avoid loops
-			if ( this.isLocked() ) {
-				return this.id;
-			}
+      _serializeRelation: function (model, rel, options) {
+        var related = model.get(rel.key),
+          includeInJSON = rel.options.includeInJSON,
+          value = null;
 
-			this.acquire();
-			var json = Backbone.Model.prototype.toJSON.call( this, options );
+        if (includeInJSON === true) {
+          if (related && _.isFunction(related.toJSON)) {
+            value = related.toJSON(options);
+          }
+        } else if (_.isString(includeInJSON)) {
+          if (related instanceof module.Collection) {
+            value = related.pluck(includeInJSON);
+          } else if (related instanceof Backbone.Model) {
+            value = related.get(includeInJSON);
+          }
 
-			if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
-				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
-			}
+          if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
+            if (rel instanceof module.HasMany) {
+              value = value.concat(rel.keyIds);
+            } else if (rel instanceof module.HasOne) {
+              value = value || rel.keyId;
 
-			_.each( this._relations, function( rel ) {
-				var related = json[ rel.key ],
-					includeInJSON = rel.options.includeInJSON,
-					value = null;
+              if (!value && !_.isObject(rel.keyContents)) {
+                value = rel.keyContents || null;
+              }
+            }
+          }
+        } else if (_.isArray(includeInJSON)) {
+          if (related instanceof module.Collection) {
+            value = [];
+            related.each(function (model) {
+              var curJson = {};
+              _.each(includeInJSON, function (key) {
+                curJson[key] = model.get(key);
+              });
+              value.push(curJson);
+            });
+          } else if (related instanceof Backbone.Model) {
+            value = {};
+            _.each(includeInJSON, _.bind(function (key) {
+              if (related.getRelation(key) && related.get(key) instanceof Backbone.Model) {
+                var subRelated = related.getRelation(key);
+                value[key] = this._serializeRelation(related, subRelated, options);
+              } else {
+                value[key] = related.get(key);
+              }
+            }, this));
+          }
+        }
 
-				if ( includeInJSON === true ) {
-					if ( related && _.isFunction( related.toJSON ) ) {
-						value = related.toJSON( options );
-					}
-				}
-				else if ( _.isString( includeInJSON ) ) {
-					if ( related instanceof module.Collection ) {
-						value = related.pluck( includeInJSON );
-					}
-					else if ( related instanceof Backbone.Model ) {
-						value = related.get( includeInJSON );
-					}
+        if (value === null && options && options.wait) {
+          value = related;
+        }
 
-					// Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
-					if ( includeInJSON === rel.relatedModel.prototype.idAttribute ) {
-						if ( rel instanceof module.HasMany ) {
-							value = value.concat( rel.keyIds );
-						}
-						else if ( rel instanceof module.HasOne ) {
-							value = value || rel.keyId;
+        return value;
+      },
 
-							if ( !value && !_.isObject( rel.keyContents ) ) {
-								value = rel.keyContents || null;
-							}
-						}
-					}
-				}
-				else if ( _.isArray( includeInJSON ) ) {
-					if ( related instanceof module.Collection ) {
-						value = [];
-						related.each( function( model ) {
-							var curJson = {};
-							_.each( includeInJSON, function( key ) {
-								curJson[ key ] = model.get( key );
-							});
-							value.push( curJson );
-						});
-					}
-					else if ( related instanceof Backbone.Model ) {
-						value = {};
-						_.each( includeInJSON, function( key ) {
-							value[ key ] = related.get( key );
-						});
-					}
-				}
-				else {
-					delete json[ rel.key ];
-				}
+      /**
+       * Convert relations to JSON, omits them when required
+       */
+      toJSON: function (options) {
+        // If this Model has already been fully serialized in this branch once, return to avoid loops
+        if (this.isLocked()) {
+          return this.id;
+        }
 
-				// In case of `wait: true`, Backbone will simply push whatever's passed into `save` into attributes.
-				// We'll want to get this information into the JSON, even if it doesn't conform to our normal
-				// expectations of what's contained in it (no model/collection for a relation, etc).
-				if ( value === null && options && options.wait ) {
-					value = related;
-				}
+        this.acquire();
+        var json = Backbone.Model.prototype.toJSON.call(this, options);
 
-				if ( includeInJSON ) {
-					json[ rel.keyDestination ] = value;
-				}
+        if (this.constructor._superModel && !(this.constructor._subModelTypeAttribute in json)) {
+          json[this.constructor._subModelTypeAttribute] = this.constructor._subModelTypeValue;
+        }
 
-				if ( rel.keyDestination !== rel.key ) {
-					delete json[ rel.key ];
-				}
-			});
+        // Extraction des relations
+        _.each(this._relations, function (rel) {
+          var value = this._serializeRelation(this, rel, options);
 
-			this.release();
-			return json;
-		}
+          if (rel.options.includeInJSON) {
+            json[rel.keyDestination] = value;
+          }
+
+          if (rel.keyDestination !== rel.key) {
+            delete json[rel.key];
+          }
+        }, this);
+
+        this.release();
+        return json;
+      }
 	},
 	{
 		/**
