@@ -878,11 +878,7 @@
 			}, this );
 
 			// Fire the 'change:<key>' event if 'related' was updated
-            if (this.related === oldRelated && _.isEmpty(this.related.changed)) {
-                if (this.instance.changed) {
-                    delete this.instance.changed[this.key];
-                }
-            } else if (!options.silent) {
+			if ( !options.silent && this.related !== oldRelated ) {
 				var dit = this;
 				this.changed = true;
 				Backbone.Relational.eventQueue.add( function() {
@@ -1077,30 +1073,25 @@
 		 * Event handler for `change:<key>`.
 		 * If the contents of the key are changed, notify old & new reverse relations and initialize the new relation.
 		 */
-        onChange: function (model, attr, options) {
-            options = options ? _.clone(options) : {};
-            this.setKeyContents(attr);
+		onChange: function( model, attr, options ) {
+			options = options ? _.clone( options ) : {};
+			this.setKeyContents( attr );
+			this.changed = false;
 
-            var oldRelated = this.instance.previousAttributes() && this.instance.previousAttributes()[this.key];
-            var related = this.findRelated(options);
-            this.changed = related !== oldRelated;
-            this.setRelated(related);
+			var related = this.findRelated( options );
+			this.setRelated( related );
 
-            if (this.related === oldRelated && _.isEmpty(this.related.changed)) {
-                if (this.instance.changed) {
-                    delete this.instance.changed[this.key];
-                }
-            } else if (!options.silent) {
-                var dit = this;
-                Backbone.Relational.eventQueue.add(function () {
-                    // The `changed` flag can be set in `handleAddition` or `handleRemoval`
-                    if (dit.changed) {
-                        dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
-                        dit.changed = false;
-                    }
-                });
-            }
-        },
+			if ( !options.silent ) {
+				var dit = this;
+				Backbone.Relational.eventQueue.add( function() {
+					// The `changed` flag can be set in `handleAddition` or `handleRemoval`
+					if ( dit.changed ) {
+						dit.instance.trigger( 'change:' + dit.key, dit.instance, dit.related, options, true );
+						dit.changed = false;
+					}
+				});
+			}
+		},
 
 		/**
 		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
