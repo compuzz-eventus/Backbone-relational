@@ -867,7 +867,7 @@
             }, this);
 
             // Fire the 'change:<key>' event if 'related' was updated
-            if (this.related === oldRelated && _.isEmpty(this.related.changed)) {
+            if (this.related === oldRelated && (!this.related || _.isEmpty(this.related.changed))) {
                 if (this.instance.changed) {
                     delete this.instance.changed[this.key];
                 }
@@ -1066,17 +1066,12 @@
         onChange: function (model, attr, options) {
             options = options ? _.clone(options) : {};
             this.setKeyContents(attr);
+            this.changed = false;
 
-            var oldRelated = this.instance.previousAttributes() && this.instance.previousAttributes()[this.key];
             var related = this.findRelated(options);
-            this.changed = related !== oldRelated;
             this.setRelated(related);
 
-            if (this.related === oldRelated && _.isEmpty(this.related.changed)) {
-                if (this.instance.changed) {
-                    delete this.instance.changed[this.key];
-                }
-            } else if (!options.silent) {
+            if (!options.silent) {
                 var dit = this;
                 Backbone.Relational.eventQueue.add(function () {
                     // The `changed` flag can be set in `handleAddition` or `handleRemoval`
