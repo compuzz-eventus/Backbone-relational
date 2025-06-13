@@ -3,8 +3,8 @@
   "license": "MIT",
   "main": "backbone-relational.js",
   "dependencies": {
-    "underscore": ">=1.7.0",
-    "backbone": ">=1.6.0"
+    "underscore": "jashkenas/underscore#>=1.8.3",
+    "backbone": "compuzz-eventus/backbone#>=1.6.2"
   },
   "ignore": ["static", "test", ".html"]
 }
