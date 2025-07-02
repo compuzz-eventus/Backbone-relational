@@ -16,12 +16,12 @@ module.exports = function(config) {
 		],
 		plugins: [
 			'karma-browserify',
-			'karma-phantomjs-launcher',
 			'karma-chrome-launcher',
 			'karma-qunit'
 		],
 
 		files: [
+			'test/setup/qunit1-shim.js',
 			'test/setup/environment.js',
 			'test/*.js'
 		],
@@ -31,6 +31,8 @@ module.exports = function(config) {
 		},
 
 		browserify: browserifyOptions,
+
+		browsers: ['ChromeHeadless'],
 
 		autoWatch: false,
 		port: 9877,
