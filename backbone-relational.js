@@ -867,11 +867,7 @@
             }, this);
 
             // Fire the 'change:<key>' event if 'related' was updated
-            if (this.related === oldRelated && (!this.related || _.isEmpty(this.related.changed))) {
-                if (this.instance.changed) {
-                    delete this.instance.changed[this.key];
-                }
-            } else if (!options.silent) {
+            if (!options.silent && this.related !== oldRelated) {
                 var dit = this;
                 this.changed = true;
                 Backbone.Relational.eventQueue.add(function () {
@@ -1489,7 +1485,9 @@
 
                 // Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
                 var attributes,
-                    result;
+                    result,
+                    // Sauvegarde de l'objet changed actuel
+                    originalChanged = _.clone(this.changed || {});
 
                 if (_.isObject(key) || key == null) {
                     attributes = key;
@@ -1508,6 +1506,9 @@
 
                     result = Backbone.Model.prototype.set.apply(this, arguments);
 
+                    // Fusionner les changements de l'appel à set avec les changements originaux
+                    this.changed = _.extend({}, originalChanged, this.changed);
+
                     // Ideal place to set up relations, if this is the first time we're here for this model
                     if (!this._isInitialized && !this.isLocked()) {
                         this.constructor.initializeModelHierarchy();
@@ -1525,7 +1526,14 @@
                     }
 
                     if (attributes) {
+                        // Sauvegarde de l'objet changed avant updateRelations
+                        var beforeUpdateChanged = _.clone(this.changed);
+
                         this.updateRelations(attributes, options);
+
+                        // Restaurer l'objet changed après updateRelations
+                        // en fusionnant avec les changements qui auraient pu être ajoutés
+                        this.changed = _.extend({}, beforeUpdateChanged, this.changed);
                     }
                 } finally {
                     // Try to run the global queue holding external events
@@ -1548,9 +1556,24 @@
                 return new this.constructor(attributes);
             },
 
+            /**
+             * Convert relations to JSON, omits them when required
+             */
+            toJSON: function (options) {
+                // If this Model has already been fully serialized in this branch once, return to avoid loops
+                if (this.isLocked()) {
+                    return this.id;
+                }
 
-            _serializeRelation: function (model, rel, options, json) {
-                var related = model.get(rel.key),
+                this.acquire();
+                var json = Backbone.Model.prototype.toJSON.call(this, options);
+
+                if (this.constructor._superModel && !(this.constructor._subModelTypeAttribute in json)) {
+                    json[this.constructor._subModelTypeAttribute] = this.constructor._subModelTypeValue;
+                }
+
+                _.each(this._relations, function (rel) {
+                    var related = json[rel.key],
                     includeInJSON = rel.options.includeInJSON,
                     value = null;
 
@@ -1565,6 +1588,7 @@
                         value = related.get(includeInJSON);
                     }
 
+                        // Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
                     if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
                         if (rel instanceof Backbone.HasMany) {
                             value = value.concat(rel.keyIds);
@@ -1588,57 +1612,29 @@
                         });
                     } else if (related instanceof Backbone.Model) {
                         value = {};
-                        _.each(includeInJSON, _.bind(function (key) {
-                            if (related.getRelation(key) && related.get(key) instanceof Backbone.Model) {
-                                var subRelated = related.getRelation(key);
-                                value[key] = this._serializeRelation(related, subRelated, options, json[key]);
-                            } else {
+                            _.each(includeInJSON, function (key) {
                                 value[key] = related.get(key);
-                            }
-                        }, this));
+                            });
                     }
                 } else {
-                    // the value need to be deleted from parent
-                    if (rel.key && json[rel.key]) {
                         delete json[rel.key];
                     }
-                }
 
+                    // In case of `wait: true`, Backbone will simply push whatever's passed into `save` into attributes.
+                    // We'll want to get this information into the JSON, even if it doesn't conform to our normal
+                    // expectations of what's contained in it (no model/collection for a relation, etc).
                 if (value === null && options && options.wait) {
                     value = related;
                 }
 
-                return value;
-            },
-
-            /**
-             * Convert relations to JSON, omits them when required
-             */
-            toJSON: function (options) {
-                // If this Model has already been fully serialized in this branch once, return to avoid loops
-                if (this.isLocked()) {
-                    return this.id;
-                }
-
-                this.acquire();
-                var json = Backbone.Model.prototype.toJSON.call(this, options);
-
-                if (this.constructor._superModel && !(this.constructor._subModelTypeAttribute in json)) {
-                    json[this.constructor._subModelTypeAttribute] = this.constructor._subModelTypeValue;
-                }
-
-                // Extraction des relations
-                _.each(this._relations, function (rel) {
-                    var value = this._serializeRelation(this, rel, options, json);
-
-                    if (rel.options.includeInJSON) {
+                    if (includeInJSON) {
                         json[rel.keyDestination] = value;
                     }
 
                     if (rel.keyDestination !== rel.key) {
                         delete json[rel.key];
                     }
-                }, this);
+                });
 
                 this.release();
                 return json;
