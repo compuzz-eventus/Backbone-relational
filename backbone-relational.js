@@ -1641,6 +1641,13 @@
                     json[this.constructor._subModelTypeAttribute] = this.constructor._subModelTypeValue;
                 }
 
+                function serializeMaybe(v, options) {
+                    if (!v) return v;
+                    if (_.isFunction(v.toJSON)) return v.toJSON(options);
+                    if (v instanceof Backbone.Collection) return v.toJSON(options);
+                    return v;
+                }
+
                 _.each(this._relations, function (rel) {
                     var related = json[rel.key],
                         includeInJSON = rel.options.includeInJSON,
@@ -1652,18 +1659,18 @@
                         }
                     } else if (_.isString(includeInJSON)) {
                         if (related instanceof Backbone.Collection) {
-                            value = related.pluck(includeInJSON);
+                            var plucked = related.pluck(includeInJSON);
+                            value = _.map(plucked, function (v) { return serializeMaybe(v, options); });
                         } else if (related instanceof Backbone.Model) {
-                            value = related.get(includeInJSON);
+                            var attrVal = related.get(includeInJSON);
+                            value = serializeMaybe(attrVal, options);
                         }
 
-                        // Add ids for 'unfound' models if includeInJSON is equal to (only) the relatedModel's `idAttribute`
                         if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
                             if (rel instanceof Backbone.HasMany) {
-                                value = value.concat(rel.keyIds);
+                                value = (value || []).concat(rel.keyIds);
                             } else if (rel instanceof Backbone.HasOne) {
                                 value = value || rel.keyId;
-
                                 if (!value && !_.isObject(rel.keyContents)) {
                                     value = rel.keyContents || null;
                                 }
@@ -1675,14 +1682,16 @@
                             related.each(function (model) {
                                 var curJson = {};
                                 _.each(includeInJSON, function (key) {
-                                    curJson[key] = model.get(key);
+                                    var v = model.get(key);
+                                    curJson[key] = serializeMaybe(v, options);
                                 });
                                 value.push(curJson);
                             });
                         } else if (related instanceof Backbone.Model) {
                             value = {};
                             _.each(includeInJSON, function (key) {
-                                value[key] = related.get(key);
+                                var v = related.get(key);
+                                value[key] = serializeMaybe(v, options);
                             });
                         }
                     } else {
@@ -1702,6 +1711,27 @@
 
                     if (rel.keyDestination !== rel.key) {
                         delete json[rel.key];
+                    }
+                });
+
+                var relationKeys = _.pluck(this._relations, 'key');
+                _.each(json, function (val, key) {
+                    if (_.contains(relationKeys, key)) return; // déjà géré ci-dessus
+                    if (!val) return;
+
+                    if (_.isFunction(val.toJSON)) {
+                        try {
+                            json[key] = val.toJSON(options);
+                        } catch (e) {
+                        }
+                        return;
+                    }
+
+                    if (val instanceof Backbone.Collection) {
+                        try {
+                            json[key] = val.toJSON(options);
+                        } catch (e) {
+                        }
                     }
                 });
 
