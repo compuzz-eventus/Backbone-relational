@@ -151,11 +151,11 @@
 		// The same order the would have executed if they didn't have to be
 		// delayed and queued.
 		process: function() {
-			var queue = this._queue;
-			this._queue = [];
-			while ( queue && queue.length ) {
-				queue.shift()();
-			}
+      var queue = this._queue;
+      this._queue = [];
+      queue.forEach(function (event ) {
+        event();
+      });
 		},
 
 		block: function() {
@@ -1602,6 +1602,9 @@
 				json[ this.constructor._subModelTypeAttribute ] = this.constructor._subModelTypeValue;
 			}
 
+			// Keep track of relation keys we've explicitly handled so we don't touch them again
+			var _handledRelationKeys = {};
+
 			_.each( this._relations, function( rel ) {
 				var related = json[ rel.key ],
 					includeInJSON = rel.options.includeInJSON,
@@ -1665,10 +1668,28 @@
 
 				if ( includeInJSON ) {
 					json[ rel.keyDestination ] = value;
+					_handledRelationKeys[ rel.keyDestination ] = true;
 				}
+
+				// Mark original key as handled (even if deleted) to avoid re-processing below
+				_handledRelationKeys[ rel.key ] = true;
 
 				if ( rel.keyDestination !== rel.key ) {
 					delete json[ rel.key ];
+				}
+			});
+
+			// Additionally, for non-relation attributes that are Backbone models/collections (or any object
+			// that implements toJSON), cascade toJSON so nested models serialize properly.
+			_.each( json, function( val, key ) {
+				if ( _handledRelationKeys[ key ] ) { return; }
+				if ( val && _.isFunction( val.toJSON ) ) {
+					try {
+						json[ key ] = val.toJSON( options );
+					}
+					catch ( e ) {
+						// In case a custom toJSON throws; leave the original value intact
+					}
 				}
 			});
 
