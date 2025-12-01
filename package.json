@@ -34,7 +34,7 @@
     "karma-phantomjs-launcher": "^1.0.0",
     "karma-qunit": "^0.1.9",
     "lodash": "^4.17.11",
-    "phantomjs-prebuilt": "^2.1.5",
+    "phantomjs-prebuilt": "^2.1.6",
     "qunitjs": "^1.22.0",
     "semver": "^5.1.2",
     "underscore": ">=1.7.0",
