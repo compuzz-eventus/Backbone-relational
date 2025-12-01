@@ -14,7 +14,8 @@
     "url": "https://github.com/compuzz-eventus/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start --single-run --browsers PhantomJS"
+    "test": "karma start --single-run --browsers PhantomJS",
+    "test:debug": "karma start --no-single-run --auto-watch --browsers Chrome"
   },
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
@@ -39,5 +40,6 @@
     "semver": "^5.1.2",
     "underscore": ">=1.7.0",
     "watchify": "^3.7.0"
-  }
+  },
+  "packageManager": "yarn@0.10.6"
 }
