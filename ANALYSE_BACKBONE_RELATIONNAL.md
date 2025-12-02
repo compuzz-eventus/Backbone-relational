@@ -6,7 +6,7 @@
 ---
 
 ### Analyse rapide du fichier `backbone-relational.js`
-- Version: `Backbone-relational.js 0.10.0` (en-tête du fichier)
+- Version: `Backbone-relational.js 0.10.7` (en-tête du fichier)
 - Compatibilité module: AMD, CommonJS, global browser — OK.
 - Compatibilité Underscore/Lodash: un shim est présent (`_.any = _.some`, `_.all = _.every`, etc.) — OK.
 - Extension de `Backbone.Collection`: `module.Collection = Backbone.Collection.extend();` — utilisé pour les collections relationnelles.

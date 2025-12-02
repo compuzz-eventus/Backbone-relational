@@ -736,7 +736,6 @@ QUnit.test("By default, `parse` should only get called on top-level objects; not
 
   // simulate what would happen if company.fetch() was called.
   company.fetch({
-    parse: true,
     response: {
       status: 200,
       responseText: _.clone(companyData)

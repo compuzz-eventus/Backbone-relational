@@ -7,7 +7,7 @@ In order to help out with bug reports please make sure you include the following
 It is very important to provide a meaningful description with your bug reports/feature requests. A good format for these descriptions will include the following:
 
 1. The problem you are facing (in as much detail as is necessary to describe the problem to someone who doesn't know anything about the system you're building)
-    - It is *extremely* helpful to make a failing test case or JSFiddle example that covers your use case. Below you can find a template JSFiddle with the Jasmine test suite and Backbone relational `0.10.0` setup (feel free to fork this!):
+    - It is *extremely* helpful to make a failing test case or JSFiddle example that covers your use case. Below you can find a template JSFiddle with the Jasmine test suite and Backbone relational `0.10.7` setup (feel free to fork this!):
         - http://jsfiddle.net/4223kp5e/1/
 2. A summary of the proposed solution
 3. A description of how this solution solves the problem, in more detail than item #2
