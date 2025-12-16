@@ -1596,25 +1596,6 @@
 			}
 
 			this.acquire();
-      options = options || {};
-      var visited = options._visited || (typeof WeakSet !== 'undefined' ? new WeakSet() : []);
-      options._visited = visited;
-
-      var already;
-      if (visited && typeof visited.has === 'function' && typeof visited.add === 'function') {
-        already = visited.has(this);
-        if (!already) visited.add(this);
-      } else {
-        already = _.indexOf(visited, this) >= 0;
-        if (!already) visited.push(this);
-      }
-
-      if (already) {
-        var minimal = (this.id != null) ? {id: this.id} : _.clone(this.attributes);
-        this.release();
-        return minimal;
-      }
-
 			var json = Backbone.Model.prototype.toJSON.call( this, options );
 
 			if ( this.constructor._superModel && !( this.constructor._subModelTypeAttribute in json ) ) {
