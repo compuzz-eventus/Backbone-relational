@@ -20,7 +20,7 @@
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
   "peerDependencies": {
-    "backbone": "^1.6.0"
+    "backbone": "github:compuzz-eventus/backbone#semver:>=1.6.3"
   },
   "license": "MIT",
   "version": "0.10.7",
