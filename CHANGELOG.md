@@ -47,7 +47,15 @@ when their fix commit is reverted.
   while every other Collection override (`set`, `reset`, `sort`, `trigger`)
   targeted `module.Collection.prototype`. Now consistent — vanilla
   Backbone.Collection instances in the same app no longer pay the wrapper
-  cost.
+  cost. **Behavior change**: previously, a plain
+  `Backbone.Collection.extend({ model: SomeRelationalModel })` half-worked
+  — it emitted `relational:remove` (from the prototype-wide override) but
+  not `relational:add` (which was on `module.Collection.prototype` only),
+  so reverse relations updated on remove but not on add. From 0.10.8
+  neither is emitted from a vanilla `Backbone.Collection`. Use
+  `Backbone.Relational.Collection.extend(...)` for any collection that
+  holds relational models. All in-tree tests and `index.html` examples
+  have been updated accordingly.
 - **`HasMany.onChange` had no recursion guard.** `HasOne.onChange` used the
   `isLocked / acquire / release` pattern to break recursion through
   `findRelated → findOrCreate → initializeRelations → addRelated → onChange`.
