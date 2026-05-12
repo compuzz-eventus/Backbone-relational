@@ -83,7 +83,7 @@ Le constructeur :
 2. Résout `relatedModel` (peut être une fonction, une string, ou un constructeur).
 3. `checkPreconditions()` (model/key/relatedModel présents, héritage de `module.Model`, pas de HasMany ↔ HasMany, key pas déjà prise).
 4. Si `reverseRelation.key` est défini et que c'est pas une auto-relation, enregistre la reverse relation côté store.
-5. Si `instance` est fourni : `setKeyContents(get(key))`, push dans `instance._relations[key]`, appelle `initialize(opts)` (spécifique HasOne/HasMany), écoute `destroy`/`relational:add`/`relational:remove` sur la `relatedCollection`.
+5. Si `instance` est fourni : `setKeyContents(get(key))`, push dans `instance._relations[key]`, appelle `initialize(opts)` (spécifique HasOne/HasMany), déclenche `autoFetch` si configuré (§4.3), écoute `destroy`/`relational:add`/`relational:remove` sur la `relatedCollection`.
 
 ### 4.1 setRelated
 
@@ -99,6 +99,44 @@ setRelated(related) {
 ### 4.2 getReverseRelations(model?)
 
 Pour chaque modèle dans `model` (ou `this.related` / `this.related.models`), retourne les relations qui sont la reverse de celle-ci. Utilisé pour propager add/remove vers le côté inverse.
+
+### 4.3 autoFetch
+
+Option par-relation qui déclenche automatiquement un fetch des modèles non-encore-chargés au moment de la construction de l'instance hôte.
+
+**Déclenchement** : ligne 669-671, à la fin du constructeur `Relation`, juste après `this.initialize(opts)` :
+
+```js
+if (this.options.autoFetch) {
+    this.instance.getAsync(this.key, _.isObject(this.options.autoFetch) ? this.options.autoFetch : {});
+}
+```
+
+**Configuration** :
+
+| Valeur | Comportement |
+|---|---|
+| `false` / absent | Pas de fetch (défaut) |
+| `true` | Fetch avec options vides `{}` |
+| `{ success, error, ... }` | Fetch avec ces options (forwardées à `Backbone.sync`) |
+
+**Flow** : `getAsync(key, opts)` calcule `idsToFetch` à partir de `rel.keyId`/`rel.keyIds` (les ids référencés mais pas encore matérialisés en modèles peuplés), puis :
+- tente un fetch batch via `coll.url(idsToFetch)` si la `Collection` du `relatedModel` fournit une URL différente pour un set d'ids ;
+- sinon, un `model.fetch(opts)` par id manquant.
+
+Les modèles déjà résolus au store (présents dans `rel.related.models`) sont exclus via `_.difference(keyIds, _.pluck(related.models, 'id'))` en sortie de `findRelated` (L1057). D'où : deux Shops qui référencent le même customer ne lancent qu'**une** requête au total.
+
+**Cas HasOne** : si `keyContents` est une string (id sans données), `findRelated` ne crée pas l'instance (car `_.isObject('id') === false` dans `findOrCreate`), `keyId` reste set. `getAsync` voit `idsToFetch = [keyId]`, crée alors un `findOrCreate({id: keyId})` (cette fois un objet ⇒ création), puis `model.fetch`. Une requête.
+
+**Cas HasMany** : chaque id non-résolu génère un fetch séparé (sauf si la coll a une URL batch). `success`/`error` sont invoqués **N fois** (une par fetch), pas une seule fois en agrégé.
+
+**Limitations à connaître** :
+
+- **Une fois seulement** — `autoFetch` ne se redéclenche pas sur les `set` ultérieurs. Pour rafraîchir, appeler `getAsync(key, {refresh: true})` manuellement.
+- **Pas de refresh automatique des stubs** — un modèle déjà au store mais jamais fetch (créé avec juste un `{id}` par exemple) est considéré "résolu" et exclu de `idsToFetch`. Il faut `{refresh: true}` pour le forcer.
+- **Pas de batching cross-instances** — N constructions = N cycles de fetches indépendants.
+- **Auto-relations** — la reverse générée automatiquement (`isAutoRelation: true`) n'hérite d'`autoFetch` que si l'user l'a mis explicitement dans `reverseRelation.autoFetch`.
+- **Pendant la construction** — `fetch` renvoie un Deferred immédiat, le reste est async. Pas de race avec l'`eventQueue` bloquée du constructeur.
 
 ## 5. HasOne
 
