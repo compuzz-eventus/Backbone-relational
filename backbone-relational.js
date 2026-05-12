@@ -307,6 +307,10 @@
          * Try to initialize any `_orphanRelation`s
          */
         processOrphanRelations: function () {
+            // Called from every Model constructor; bail out fast when there's nothing to resolve.
+            if (!this._orphanRelations.length) {
+                return;
+            }
             // Make sure to operate on a copy since we're removing while iterating
             _.each(this._orphanRelations.slice(0), _.bind(function (rel) {
                 var relatedModel = module.store.getObjectByName(rel.relatedModel);
