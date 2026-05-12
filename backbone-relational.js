@@ -81,6 +81,11 @@
 		_.all = _.every;
 		_.contains = _.includes;
 		_.pluck = _.map;
+		// Lodash 4 renamed Underscore's iterating `_.invoke` to `_.invokeMap`
+		// (Lodash 4's own `_.invoke` is a single-value path lookup, not iterating).
+		if (_.invokeMap) {
+			_.invoke = _.invokeMap;
+		}
 	}
 
     /**
