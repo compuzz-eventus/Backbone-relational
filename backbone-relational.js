@@ -1172,6 +1172,10 @@
         },
 
         removeRelated: function (model, coll, options) {
+            if (!this.related) {
+                return;
+            }
+
             if (this.related.get(model)) {
                 this.related.remove(model, options);
             }
