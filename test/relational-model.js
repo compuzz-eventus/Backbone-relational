@@ -1270,3 +1270,54 @@ QUnit.module( "Backbone.Relational.Model inheritance (`subModelTypes`)", { setup
 
 		equal( json.type, 'dog', "The value of 'type' is the pet animal's type." );
 	});
+
+	QUnit.test( "getAsync on an unknown relation key does not throw", function() {
+		// Before the null-guard fix, `coll = rel.related instanceof ...` deref'd `rel`
+		// directly even when getRelation(attr) returned undefined, raising a TypeError.
+		var zoo = new Zoo({ id: 'z-getasync-1', name: 'Artis' });
+
+		try {
+			zoo.getAsync( 'thisIsNotARelation' );
+			ok( true, 'getAsync did not throw' );
+		} catch ( e ) {
+			ok( false, 'getAsync threw: ' + ( e && e.message ) );
+		}
+	});
+
+	QUnit.test( "Model constructor does not mutate caller's options.collection", function() {
+		// Before the constructor-clone fix, the line `delete options.collection`
+		// wiped the caller's object — surprising when callers share an options
+		// reference across multiple constructions.
+		var coll = new AnimalCollection();
+		var sharedOpts = { collection: coll };
+
+		new Animal( { id: 'a-mut-1' }, sharedOpts );
+
+		ok( sharedOpts.collection === coll, "options.collection was preserved" );
+	});
+
+	QUnit.test( "initializeRelations releases the semaphore even when a relation init throws", function() {
+		// Before the try/finally fix, a throw inside the `_.each` skipped `release()`,
+		// leaving the model permanently `isLocked()` (which silently disables
+		// `updateRelations` for the rest of the model's lifetime).
+		var capturedModel = null;
+		var orig = Backbone.Relational.store.initializeRelation;
+
+		Backbone.Relational.store.initializeRelation = function( model ) {
+			capturedModel = model;
+			throw new Error( 'simulated relation init failure' );
+		};
+
+		try {
+			try {
+				new Zoo( { id: 'z-init-fail' } );
+			} catch ( e ) {
+				// expected to propagate
+			}
+		} finally {
+			Backbone.Relational.store.initializeRelation = orig;
+		}
+
+		ok( capturedModel, 'the failing init reached the model' );
+		ok( !capturedModel.isLocked(), 'model is not permanently locked after init throw' );
+	});

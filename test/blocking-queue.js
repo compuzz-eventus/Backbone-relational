@@ -29,3 +29,24 @@ QUnit.module( "Backbone.Relational.BlockingQueue", { setup: require('./setup/set
 
 		equal( count, 1, 'Increment executed' );
 	});
+
+	QUnit.test( "process continues after a queued handler throws", function() {
+		var queue = new Backbone.Relational.BlockingQueue();
+		var ran = [];
+
+		queue.block();
+		queue.add( function() { ran.push( 1 ); } );
+		queue.add( function() { ran.push( 2 ); throw new Error( 'simulated' ); } );
+		queue.add( function() { ran.push( 3 ); } );
+
+		// The fix logs a warning when a handler throws; silence it during the test.
+		var origWarn = typeof console !== 'undefined' ? console.warn : null;
+		if ( origWarn ) { console.warn = function() {}; }
+		try {
+			queue.unblock();
+		} finally {
+			if ( origWarn ) { console.warn = origWarn; }
+		}
+
+		deepEqual( ran, [ 1, 2, 3 ], 'all three handlers ran despite the middle one throwing' );
+	});

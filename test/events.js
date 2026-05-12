@@ -326,3 +326,25 @@ QUnit.module( "Events", { setup: require('./setup/setup').reset } );
 
 		ok( changeEventsTriggered === 2, 'one change each triggered for `house` and `person`' );
 	});
+
+	QUnit.test( "Custom 'change'-prefixed events don't pollute _attributeChangeFired", function() {
+		// Before the trigger-filter fix, `eventName.length > 5 && indexOf('change') === 0`
+		// matched things like 'changeset' / 'changes' too. While the eventQueue was locked,
+		// those got queued and the handler set `_attributeChangeFired = true` (via the
+		// "no relation, changed" branch), causing the next queued `change` to fire even
+		// when nothing had actually changed.
+		var animal = new Animal({ id: 'cs-1' });
+
+		var changeFired = 0;
+		animal.on( 'change', function() { changeFired++; } );
+
+		Backbone.Relational.eventQueue.block();
+		try {
+			animal.trigger( 'changeset' );  // not a Backbone change event
+			animal.trigger( 'change' );     // should NOT fire — nothing actually changed
+		} finally {
+			Backbone.Relational.eventQueue.unblock();
+		}
+
+		equal( changeFired, 0, 'no spurious change event from `changeset`' );
+	});
