@@ -886,20 +886,8 @@
                 var dit = this;
                 this.changed = true;
                 module.eventQueue.add(function () {
-                    // NOUVEAU : Tracker que cet événement a vraiment été déclenché
-                    if (!dit.instance._relationEventsFired) {
-                        dit.instance._relationEventsFired = {};
-                    }
-                    dit.instance._relationEventsFired[dit.key] = true;
                     dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
                     dit.changed = false;
-
-                    // Nettoyer le tracker après un délai
-                    _.defer(function () {
-                        if (dit.instance._relationEventsFired) {
-                            delete dit.instance._relationEventsFired[dit.key];
-                        }
-                    });
                 });
             }
             this.release();
@@ -1250,52 +1238,35 @@
                         args = arguments;
 
                     if (!module.eventQueue.isLocked()) {
-                        return Backbone.Model.prototype.trigger.apply(dit, args);
+                        // If we're not in a more complicated nested scenario, fire the change event right away
+                        Backbone.Model.prototype.trigger.apply(dit, args);
                     } else {
                         module.eventQueue.add(function () {
+                            // Determine if the `change` event is still valid, now that all relations are populated
                             var changed = true;
                             if (eventName === 'change') {
-                                // OPTIMISATION : Vérification rapide avant génération d'ID
-                                if (!dit.changed || _.isEmpty(dit.changed)) {
-                                    changed = dit._attributeChangeFired;
-                                    dit._attributeChangeFired = false;
-                                } else {
-                                    // OPTIMISATION : ID simplifié basé sur les clés seulement
-                                    var changeId = _.keys(dit.changed).sort().join('|');
-
-                                    if (dit._firedChangeEvents && dit._firedChangeEvents[changeId]) {
-                                        changed = false;
-                                    } else {
-                                        changed = dit.hasChanged() || dit._attributeChangeFired;
-                                        dit._attributeChangeFired = false;
-
-                                        if (changed) {
-                                            if (!dit._firedChangeEvents) {
-                                                dit._firedChangeEvents = {};
-                                            }
-                                            dit._firedChangeEvents[changeId] = true;
-
-                                            // OPTIMISATION : Nettoyage groupé au lieu de defer individuel
-                                            if (!dit._cleanupScheduled) {
-                                                dit._cleanupScheduled = true;
-                                                _.defer(function() {
-                                                    dit._firedChangeEvents = {};
-                                                    dit._cleanupScheduled = false;
-                                                });
-                                            }
-                                        }
-                                    }
-                                }
+                                // `hasChanged` may have gotten reset by nested calls to `set`.
+                                changed = dit.hasChanged() || dit._attributeChangeFired;
+                                dit._attributeChangeFired = false;
                             } else {
-                                // Logique existante pour les événements change:attr...
                                 var attr = eventName.slice(7),
                                     rel = dit.getRelation(attr);
 
                                 if (rel) {
+                                    // If `attr` is a relation, `change:attr` get triggered from `Relation.onChange`.
+                                    // These take precedence over `change:attr` events triggered by `Model.set`.
+                                    // The relation sets a fourth attribute to `true`. If this attribute is present,
+                                    // continue triggering this event; otherwise, it's from `Model.set` and should be stopped.
                                     changed = (args[4] === true);
+
+                                    // If this event was triggered by a relation, set the right value in `this.changed`
+                                    // (a Collection or Model instead of raw data).
                                     if (changed) {
                                         dit.changed[attr] = args[2];
-                                    } else if (!rel.changed) {
+                                    }
+                                        // Otherwise, this event is from `Model.set`. If the relation doesn't report a change,
+                                    // remove attr from `dit.changed` so `hasChanged` doesn't take it into account.
+                                    else if (!rel.changed) {
                                         delete dit.changed[attr];
                                     }
                                 } else if (changed) {
@@ -1527,12 +1498,14 @@
 			return Backbone.$.when.apply(null, deferArray);
 		},
 
-		set: function( key, value, options ) {
-			module.eventQueue.block();
+            set: function (key, value, options) {
+                module.eventQueue.block();
 
                 // Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
                 var attributes,
-                    result;
+                    result,
+                    // Sauvegarde de l'objet changed actuel
+                    originalChanged = _.clone(this.changed || {});
 
                 if (_.isObject(key) || key == null) {
                     attributes = key;
@@ -1551,6 +1524,10 @@
 
                     result = Backbone.Model.prototype.set.apply(this, arguments);
 
+                    // Fusionner les changements de l'appel à set avec les changements originaux
+                    this.changed = _.extend({}, originalChanged, this.changed);
+
+
                     // Ideal place to set up relations, if this is the first time we're here for this model
                     if (!this._isInitialized && !this.isLocked()) {
                         this.constructor.initializeModelHierarchy();
@@ -1561,61 +1538,21 @@
                         }
 
                         this.initializeRelations(options);
-                    } else if (newId && newId !== id) {
+                    }
+                    // The store should know about an `id` update asap
+                    else if (newId && newId !== id) {
                         module.store.update(this);
                     }
 
                     if (attributes) {
-                        // NOUVEAU : Détecter si on est dans une référence circulaire
-                        var isInCircularReference = this._inUpdateRelations || false;
-
-                        // Sauvegarder changed avant updateRelations
-                        var changedBeforeRelations = _.clone(this.changed);
-
-                        // Marquer qu'on entre dans updateRelations pour détecter les références circulaires
-                        this._inUpdateRelations = true;
+                        // Sauvegarde de l'objet changed avant updateRelations
+                        var beforeUpdateChanged = _.clone(this.changed);
 
                         this.updateRelations(attributes, options);
 
-                        // Restaurer le flag seulement si on n'était pas déjà dans une référence circulaire
-                        if (!isInCircularReference) {
-                            this._inUpdateRelations = false;
-                        }
-
-                        // Restaurer changed intelligemment
-                        if (!_.isEmpty(changedBeforeRelations)) {
-                            // OPTIMISATION : Traitement sélectif seulement si nécessaire
-                            var needsProcessing = false;
-                            _.each(changedBeforeRelations, function(value, key) {
-                                if (this.getRelation(key)) {
-                                    needsProcessing = true;
-                                    return false; // Sortir de la boucle dès qu'on trouve une relation
-                                }
-                            }, this);
-
-                            if (needsProcessing) {
-                                var finalChanged = {};
-                                _.each(changedBeforeRelations, function (value, key) {
-                                    var rel = this.getRelation(key);
-                                    if (rel) {
-                                        // Logique simplifiée pour les relations
-                                        var currentValue = this.attributes[key];
-                                        var previousValue = this._previousAttributes[key];
-                                        if (currentValue !== previousValue) {
-                                            finalChanged[key] = value;
-                                        }
-                                    } else {
-                                        // Garder les attributs normaux
-                                        finalChanged[key] = value;
-                                    }
-                                }, this);
-
-                                this.changed = _.extend({}, finalChanged, this.changed);
-                            } else {
-                                // Pas de relations, garder tel quel
-                                this.changed = _.extend({}, changedBeforeRelations, this.changed);
-                            }
-                        }
+                        // Restaurer l'objet changed après updateRelations
+                        // en fusionnant avec les changements qui auraient pu être ajoutés
+                        this.changed = _.extend({}, beforeUpdateChanged, this.changed);
                     }
                 } finally {
                     // Try to run the global queue holding external events
@@ -1623,14 +1560,6 @@
                 }
 
                 return result;
-            },
-
-// NOUVELLE méthode helper pour extraire les IDs de relation
-            _extractRelationId: function (value) {
-                if (!value) return null;
-                if (value.id !== undefined) return value.id;
-                if (_.isObject(value)) return value;
-                return value;
             },
 
             clone: function () {
@@ -1671,27 +1600,27 @@
 
                 _.each(this._relations, function (rel) {
                     var related = json[rel.key],
-                        includeInJSON = rel.options.includeInJSON,
-                        value = null;
+                    includeInJSON = rel.options.includeInJSON,
+                    value = null;
 
-        if (includeInJSON === true) {
-          if (related && _.isFunction(related.toJSON)) {
-            value = related.toJSON(options);
-          }
-        } else if (_.isString(includeInJSON)) {
-          if (related instanceof module.Collection) {
-            var plucked = related.pluck(includeInJSON);
+                    if (includeInJSON === true) {
+                        if (related && _.isFunction(related.toJSON)) {
+                            value = related.toJSON(options);
+                        }
+                    } else if (_.isString(includeInJSON)) {
+                        if (related instanceof module.Collection) {
+                            var plucked = related.pluck(includeInJSON);
                             value = _.map(plucked, function (v) { return serializeMaybe(v, options); });
-          } else if (related instanceof Backbone.Model) {
-            var attrVal = related.get(includeInJSON);
-          value = serializeMaybe(attrVal, options);
+                        } else if (related instanceof Backbone.Model) {
+                            var attrVal = related.get(includeInJSON);
+                            value = serializeMaybe(attrVal, options);
                         }
 
-          if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
-            if (rel instanceof module.HasMany) {
-              value = (value || []).concat(rel.keyIds);
-            } else if (rel instanceof module.HasOne) {
-              value = value || rel.keyId;
+                        if (includeInJSON === rel.relatedModel.prototype.idAttribute) {
+                            if (rel instanceof module.HasMany) {
+                                value = (value || []).concat(rel.keyIds);
+                            } else if (rel instanceof module.HasOne) {
+                                value = value || rel.keyId;
 
                             if (!value && !_.isObject(rel.keyContents)) {
                                 value = rel.keyContents || null;
@@ -1705,24 +1634,27 @@
                             var curJson = {};
                             _.each(includeInJSON, function (key) {
                                 var v = model.get(key);
-                                    curJson[key] = serializeMaybe(v, options);
-                                });
-                                value.push(curJson);
+                                curJson[key] = serializeMaybe(v, options);
                             });
-                        } else if (related instanceof Backbone.Model) {
-                            value = {};
+                            value.push(curJson);
+                        });
+                    } else if (related instanceof Backbone.Model) {
+                        value = {};
                             _.each(includeInJSON, function (key) {
                                 var v = related.get(key);
                                 value[key] = serializeMaybe(v, options);
                             });
-                        }
-                    } else {
+                    }
+                } else {
                         delete json[rel.key];
                     }
 
-        if (value === null && options && options.wait) {
-          value = related;
-        }
+                    // In case of `wait: true`, Backbone will simply push whatever's passed into `save` into attributes.
+                    // We'll want to get this information into the JSON, even if it doesn't conform to our normal
+                    // expectations of what's contained in it (no model/collection for a relation, etc).
+                    if (value === null && options && options.wait) {
+                        value = related;
+                    }
 
                     if (includeInJSON) {
                         json[rel.keyDestination] = value;
@@ -1756,107 +1688,6 @@
 
                 this.release();
                 return json;
-            },
-
-            /**
-             * Override hasChanged to properly handle relations by cleaning up false positives
-             * in this.changed before calling the original Backbone hasChanged method
-             */
-            hasChanged: function(attr) {
-                // Si un attribut spécifique est demandé, utiliser la logique standard
-                if (attr) {
-                    return Backbone.Model.prototype.hasChanged.call(this, attr);
-                }
-
-                // PROTECTION CONTRE LA RÉCURSION
-                if (this._checkingHasChanged) {
-                    return Backbone.Model.prototype.hasChanged.call(this);
-                }
-
-                // OPTIMISATION : Vérification rapide avant traitement coûteux
-                if (!this.changed || _.isEmpty(this.changed)) {
-                    return Backbone.Model.prototype.hasChanged.call(this);
-                }
-
-                // OPTIMISATION : Cache du résultat pour éviter les recalculs
-                if (this._hasChangedCache !== undefined) {
-                    return this._hasChangedCache;
-                }
-
-                this._checkingHasChanged = true;
-
-                try {
-                    var hasRelationChanges = false;
-                    var cleanedChanged = {};
-
-                    // OPTIMISATION : Traiter seulement les relations qui ont potentiellement changé
-                    _.each(this.changed, function(value, key) {
-                        var rel = this.getRelation(key);
-                        var shouldKeepInChanged = false;
-
-                        if (rel) {
-                            hasRelationChanges = true;
-                            var currentValue = this.attributes[key];
-                            var previousValue = this._previousAttributes ? this._previousAttributes[key] : undefined;
-
-                            // OPTIMISATION : Comparaison rapide de référence d'abord
-                            if (currentValue !== previousValue) {
-                                shouldKeepInChanged = true;
-                            }
-                            // Seulement si les références sont identiques, vérifier les changements internes
-                            else if (currentValue && currentValue.hasChanged && _.isFunction(currentValue.hasChanged)) {
-                                if (!currentValue._checkingHasChanged) {
-                                    shouldKeepInChanged = currentValue.hasChanged();
-                                }
-                            }
-                            // Pour les collections, vérification optimisée
-                            else if (currentValue && currentValue.models && _.isArray(currentValue.models)) {
-                                // OPTIMISATION : Vérifier d'abord si la collection a un flag de changement
-                                if (currentValue._hasModelChanges !== false) {
-                                    shouldKeepInChanged = _.some(currentValue.models, function(model) {
-                                        return model.hasChanged && _.isFunction(model.hasChanged) &&
-                                            !model._checkingHasChanged && model.hasChanged();
-                                    });
-                                    // Cache le résultat pour éviter les recalculs
-                                    currentValue._hasModelChanges = shouldKeepInChanged;
-                                }
-                            }
-                        } else {
-                            // OPTIMISATION : Pour les attributs normaux, utiliser la comparaison directe
-                            shouldKeepInChanged = !_.isEqual(this.attributes[key], this._previousAttributes[key]);
-                        }
-
-                        if (shouldKeepInChanged) {
-                            cleanedChanged[key] = value;
-                        }
-                    }, this);
-
-                    // OPTIMISATION : Seulement mettre à jour this.changed si nécessaire
-                    if (hasRelationChanges) {
-                        this.changed = cleanedChanged;
-                    }
-
-                    var result = Backbone.Model.prototype.hasChanged.call(this);
-
-                    // OPTIMISATION : Cache du résultat
-                    this._hasChangedCache = result;
-
-                    // Nettoyer le cache après un délai
-                    _.defer(function() {
-                        delete this._hasChangedCache;
-                        // Nettoyer les caches des collections
-                        _.each(this._relations, function(rel) {
-                            var related = this.attributes[rel.key];
-                            if (related && related._hasModelChanges !== undefined) {
-                                delete related._hasModelChanges;
-                            }
-                        }, this);
-                    }.bind(this));
-
-                    return result;
-                } finally {
-                    this._checkingHasChanged = false;
-                }
             }
         },
         {
