@@ -188,7 +188,14 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		equal( zoo.get( 'animals' ).length, 3 );
 	});
 
-	QUnit.test( "getAsync", 8, function() {
+	QUnit.test( "getAsync", function( assert ) {
+		// jQuery 3+ made `$.Deferred` Promises/A+ compliant, so `.done` callbacks fire on
+		// the next microtask instead of synchronously inside `resolve()`. This test was
+		// originally written assuming the jQuery 2 sync semantics — assertions that depend
+		// on chained `.done` work now have to run inside that callback.
+		assert.expect( 8 );
+		var done = assert.async();
+
 		var zoo = Zoo.findOrCreate( { id: 'z-1', animals: [ 'cat-1' ] } );
 
 		zoo.on( 'add:animals', function( animal ) {
@@ -199,26 +206,29 @@ QUnit.module( "Backbone.Relational.Model", { setup: require('./setup/data') } );
 		});
 
 		zoo.getAsync( 'animals' ).done( function( animals ) {
-			ok( animals instanceof AnimalCollection );
-			ok( animals.length === 1 );
+			assert.ok( animals instanceof AnimalCollection );
+			assert.ok( animals.length === 1 );
 
 			var cat = zoo.get( 'animals' ).at( 0 );
-			equal( cat.get( 'name' ), 'Tiger' );
+			assert.equal( cat.get( 'name' ), 'Tiger' );
 
 			cat.getAsync( 'favoriteFood' ).done( function( food ) {
-				equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
+				assert.equal( food.get( 'name' ), 'Cheese', 'Favorite food is cheese' );
+				done();
 			});
+
+			// `cat.getAsync` just enqueued a new request to fetch the food.
+			assert.equal( window.requests.length, 2 );
+			_.last( window.requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
 		});
 
-		equal( zoo.get( 'animals' ).length, 1 );
-		equal( window.requests.length, 1 );
-		equal( _.last( window.requests ).url, '/animal/cat-1' );
+		// Synchronous assertions: these run before the outer `.done` microtask fires.
+		assert.equal( zoo.get( 'animals' ).length, 1 );
+		assert.equal( window.requests.length, 1 );
+		assert.equal( _.last( window.requests ).url, '/animal/cat-1' );
 
-		// Declare success
+		// Triggers the outer `.done` callback on the next microtask.
 		_.last( window.requests ).respond( 200, { id: 'cat-1', name: 'Tiger', favoriteFood: 'f-2' } );
-		equal( window.requests.length, 2 );
-
-		_.last( window.requests ).respond( 200, { id: 'f-2', name: 'Cheese' } );
 	});
 
 	QUnit.test( "autoFetch a HasMany relation", function() {

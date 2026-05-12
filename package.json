@@ -28,7 +28,7 @@
     "aliasify": "^2.1.0",
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
     "browserify": "^17.0.1",
-    "jquery": "^2.2.4",
+    "jquery": "^4.0.0",
     "karma": "^6.4.4",
     "karma-browserify": "^8.1.0",
     "karma-chrome-launcher": "^3.2.0",
