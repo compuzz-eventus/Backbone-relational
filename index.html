@@ -1261,13 +1261,87 @@ User = Backbone.RelationalModel.extend();
 	<section id="change-log">
 		<h2>Change Log</h2>
 
+		<p>
+			<em>From 0.10.8 onward this branch tracks the <a href="https://github.com/compuzz-eventus/Backbone-relational">compuzz-eventus fork</a>; earlier entries reference the original PaulUithol repository.</em>
+		</p>
+
 		<h4>Master
 			<small>
 				<span class="date">(future)</span> &ndash;
-				<a href="https://github.com/PaulUithol/Backbone-relational/compare/0.10.0...master">diff</a> &ndash;
-				<a href="https://raw.github.com/PaulUithol/Backbone-relational/master/backbone-relational.js">download</a>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.8...master">diff</a> &ndash;
+				<a href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/master/backbone-relational.js">download</a>
 			</small>
 		</h4>
+
+		<h4>0.10.8
+			<small>
+				<span class="date">(12 May 2026)</span> &ndash;
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.7...0.10.8">diff</a> &ndash;
+				<a href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/0.10.8/backbone-relational.js">download</a>
+			</small>
+		</h4>
+		<p>A focused bug-fix and hardening pass. No new features and no breaking change for code that doesn't rely on the previously-inconsistent batch <q>autoFetch.success</q> signature. Five of these fixes are pinned by new regression tests that fail when their fix is reverted.</p>
+		<ul>
+			<li>
+				<strong>HIGH</strong> &mdash;
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/2d99430"><q>2d99430</q></a>:
+				Shim <q>_.invoke</q> to <q>_.invokeMap</q> when running with Lodash 4 &mdash; without this, <q>Store.unregister</q> silently stopped calling <q>stopListening</q> on each Relation, leaking listeners.
+			</li>
+			<li>
+				<strong>HIGH</strong> &mdash;
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/0f88412"><q>0f88412</q></a>:
+				Guard the <q>coll</q> dereference in <q>getAsync</q> when <q>attr</q> is not a relation key &mdash; previously threw <q>Cannot read properties of undefined</q>.
+			</li>
+			<li>
+				<strong>HIGH</strong> &mdash;
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/52de949"><q>52de949</q></a>:
+				Null-guard <q>this.related</q> in <q>HasMany.removeRelated</q>, mirroring the existing guard in <q>HasOne.removeRelated</q>.
+			</li>
+			<li>
+				<strong>HIGH</strong> &mdash;
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/06d2f8c"><q>06d2f8c</q></a>:
+				<q>toJSON</q> now logs a warning instead of silently swallowing exceptions raised by nested <q>toJSON</q> calls.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/942e702"><q>942e702</q></a>:
+				Tighten the <q>trigger</q> filter to match only <q>change</q> / <q>change:&lt;attr&gt;</q> instead of any event whose name starts with <q>change</q> &mdash; events like <q>changeset</q> no longer pollute <q>_attributeChangeFired</q>.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/5455e41"><q>5455e41</q></a>:
+				<q>Model</q> constructor no longer mutates the caller's <q>options</q> when stripping <q>collection</q>.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/ef1f1d8"><q>ef1f1d8</q></a>:
+				Override <q>_removeModels</q> on <q>module.Collection.prototype</q> only, matching the other Collection overrides (<q>set</q>, <q>reset</q>, <q>sort</q>, <q>trigger</q>).
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/cc0ceb9"><q>cc0ceb9</q></a>:
+				<q>HasMany.onChange</q> now guards against recursive entry, mirroring <q>HasOne.onChange</q>.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/9193184"><q>9193184</q></a>:
+				<q>initializeRelations</q> releases its semaphore via <q>finally</q> &mdash; a throwing relation init no longer leaves the model permanently <q>isLocked()</q>.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/e9c2362"><q>e9c2362</q></a>:
+				<q>BlockingQueue.process</q> isolates handler exceptions per item so one broken listener doesn't drop the rest of the queued events.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/649a671"><q>649a671</q></a>:
+				<q>autoFetch.success</q> now fires once per requested id with <q>(model, response, options)</q> in both the batch and the per-model fetch paths.
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/609e334"><q>609e334</q></a>:
+				Fast-path <q>processOrphanRelations</q> when nothing is queued (called from every Model constructor).
+			</li>
+			<li>
+				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/284a651"><q>284a651</q></a>:
+				Five new regression tests pinning the highest-impact fixes (verified to fail when their fix is reverted).
+			</li>
+			<li>
+				Documentation: <code>docs/ARCHITECTURE.md</code> now covers the autoFetch system (&sect;4.3) and records the load-bearing <q>_.defaults</q> mutation in the Relation constructor as invariant #6 of &sect;10.
+			</li>
+		</ul>
 
 		<h4>0.10.0
 			<small>
