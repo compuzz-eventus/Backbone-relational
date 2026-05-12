@@ -1085,22 +1085,32 @@
          * If the contents of the key are changed, notify old & new reverse relations and initialize the new relation.
          */
         onChange: function (model, attr, options) {
-            options = options ? _.clone(options) : {};
-            this.setKeyContents(attr);
-            this.changed = false;
+            // Don't accept recursive calls to onChange (mirrors HasOne.onChange).
+            if (this.isLocked()) {
+                return;
+            }
+            this.acquire();
 
-            var related = this.findRelated(options);
-            this.setRelated(related);
+            try {
+                options = options ? _.clone(options) : {};
+                this.setKeyContents(attr);
+                this.changed = false;
 
-            if (!options.silent) {
-                var dit = this;
-                module.eventQueue.add(function () {
-                    // The `changed` flag can be set in `handleAddition` or `handleRemoval`
-                    if (dit.changed) {
-                        dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
-                        dit.changed = false;
-                    }
-                });
+                var related = this.findRelated(options);
+                this.setRelated(related);
+
+                if (!options.silent) {
+                    var dit = this;
+                    module.eventQueue.add(function () {
+                        // The `changed` flag can be set in `handleAddition` or `handleRemoval`
+                        if (dit.changed) {
+                            dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
+                            dit.changed = false;
+                        }
+                    });
+                }
+            } finally {
+                this.release();
             }
         },
 
