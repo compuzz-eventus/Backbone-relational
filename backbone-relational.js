@@ -1492,6 +1492,7 @@
 
                     if (setUrl) {
                         // Do a single request to fetch all models
+                        var origSuccess = options.success;
                         var opts = _.defaults(
                             {
                                 error: function () {
@@ -1505,6 +1506,21 @@
                             },
                             options
                         );
+
+                        if (origSuccess) {
+                            // Normalize the success callback shape to match the per-model path:
+                            // call `success(model, response, options)` once per requested id,
+                            // regardless of whether we ended up using the batch URL or the
+                            // per-model URL. Without this, users get `success(collection, ...)`
+                            // for batch and `success(model, ...)` for per-model from the same
+                            // `autoFetch.success` declaration.
+                            opts.success = function (collection, response, fetchOpts) {
+                                _.each(idsToFetch, function (id) {
+                                    var m = rel.relatedModel.findModel(id);
+                                    if (m) origSuccess.call(fetchOpts && fetchOpts.context, m, response, fetchOpts);
+                                });
+                            };
+                        }
 
                         requests = [coll.fetch(opts)];
                     } else {
