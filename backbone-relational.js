@@ -1675,6 +1675,8 @@
                         try {
                             json[key] = val.toJSON(options);
                         } catch (e) {
+                            module.showWarnings && typeof console !== 'undefined' &&
+                                console.warn('toJSON: failed to serialize attribute %o; %o', key, e);
                         }
                         return;
                     }
@@ -1683,6 +1685,8 @@
                         try {
                             json[key] = val.toJSON(options);
                         } catch (e) {
+                            module.showWarnings && typeof console !== 'undefined' &&
+                                console.warn('toJSON: failed to serialize attribute %o; %o', key, e);
                         }
                     }
                 });
