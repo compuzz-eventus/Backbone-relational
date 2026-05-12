@@ -260,3 +260,9 @@ Mêmes overrides pour `_removeModels` (trigger `relational:remove`), `reset` (`r
 3. **`module.eventQueue` ne doit jamais être vidée prématurément**. Le bloc/unbloc fonctionne en pile (sémaphore). Si on `unblock()` trop tôt, des consommateurs voient un état partiel (relations pas encore reliées).
 4. **`args[4] === true` est le marqueur** "cet event change:<key> vient du Relation, pas de Backbone.Model.set". Critique pour le filtrage dans le `trigger` override.
 5. **`HasOne.setRelated` écrase `attributes[key]`** avec le modèle relationnel résolu. Donc après `animal.set('livesIn', 'z1')`, on lit `animal.attributes.livesIn === <Zoo model>`, pas `'z1'`.
+6. **La mutation `_.defaults` dans `module.Relation` constructeur est load-bearing**. Lignes 591-593 :
+    ```js
+    this.reverseRelation = _.defaults(options.reverseRelation || {}, this.options.reverseRelation);
+    this.options = _.defaults(options, this.options, module.Relation.prototype.options);
+    ```
+    Ces appels mutent le descripteur de relation passé par l'appelant — c'est volontaire. `Store.addReverseRelation` (L271-275) dédoublonne via `_.all(relation, (val, key) => val === rel[key])` : une égalité `===` sur **tous** les champs du descripteur, y compris les sous-objets `reverseRelation`. Si on clone (`_.defaults({}, options, …)`) côté constructeur, chaque construction produit un nouveau `this.options` et donc un nouveau descripteur de reverse — le dédoublonnage échoue, et chaque instance de modèle ré-enregistre la même reverse relation. Sur N parents × M enfants, c'est exponentiel (benchmarks.js "Creation and destruction" passe en timeout). **Garder la mutation**, ou refactorer le dédoublonnage pour comparer un sous-ensemble de champs (`model`, `relatedModel`, `type`, `key`) plutôt que le descripteur complet.
