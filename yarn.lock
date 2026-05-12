@@ -121,7 +121,7 @@ available-typed-arrays@^1.0.7:
 
 "backbone@github:compuzz-eventus/backbone#1.6.3":
   version "1.6.3"
-  resolved "https://codeload.github.com/compuzz-eventus/backbone/tar.gz/197f3237bb7d9a0d5a6861f4214c8ba614d4bb8e"
+  resolved "https://codeload.github.com/compuzz-eventus/backbone/tar.gz/cbd2891a7a30e7ba9b275137a0f7e1dbd4e76ff1"
   dependencies:
     underscore "^1.8.3"
 
