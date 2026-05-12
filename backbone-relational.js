@@ -155,8 +155,16 @@
         process: function () {
             var queue = this._queue;
             this._queue = [];
-            queue.forEach(function (event ) {
-                event();
+            queue.forEach(function (event) {
+                // Don't let one broken handler swallow the rest of the deferred events:
+                // forEach would abort on the first throw and the remaining items have already
+                // been moved out of `this._queue`, so they would be lost forever.
+                try {
+                    event();
+                } catch (e) {
+                    module.showWarnings && typeof console !== 'undefined' &&
+                        console.warn('BlockingQueue: queued handler threw; continuing. %o', e);
+                }
             });
         },
 
