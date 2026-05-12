@@ -1,7 +1,7 @@
 /* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 /**
  * Backbone-relational.js 0.10.7
- * (c) 2011-2014 Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
+ * (c) 2011-present Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  *
  * Backbone-relational may be freely distributed under the MIT license; see the accompanying LICENSE.txt.
  * For details and documentation: https://github.com/PaulUithol/Backbone-relational.
@@ -11,7 +11,7 @@
  *
  Zoo = Backbone.Relational.Model.extend({
  relations: [ {
- type: Backbone.HasMany,
+ type: Backbone.Relational.HasMany,
  key: 'animals',
  relatedModel: 'Animal',
  reverseRelation: {
@@ -2011,6 +2011,9 @@
         // Add 'models' in a single batch, so the original add will only be called once (and thus 'sort', etc).
         // If `parse` was specified, the collection and contained models have been parsed now.
         toAdd = singular ? (toAdd.length ? toAdd[0] : null) : toAdd;
+        // Force `merge: false` (overriding any caller-provided value): `findOrCreate` above already
+        // merged the incoming attributes into the existing model. Letting Backbone re-merge here
+        // would redo that work and re-fire `change:*` events for the second time.
         var result = set.call(this, toAdd, _.defaults({merge: false, parse: false}, options));
 
         for (i = 0; i < newModels.length; i++) {
