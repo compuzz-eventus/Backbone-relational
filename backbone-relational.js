@@ -1209,8 +1209,10 @@
                     var dit = this,
                         collection = this.collection = options.collection;
 
-                    // Prevent `collection` from cascading down to nested models; they shouldn't go into this `if` clause.
-                    delete options.collection;
+                    // Clone options before stripping `collection` so we don't mutate the caller's object
+                    // (which may be shared across multiple calls). `collection` is removed so it doesn't
+                    // cascade down to nested models built from these options.
+                    options = _.omit(options, 'collection');
 
                     this._deferProcessing = true;
 
@@ -1237,7 +1239,7 @@
                 module.eventQueue.block();
 
                 try {
-                    Backbone.Model.apply(this, arguments);
+                    Backbone.Model.call(this, attributes, options);
                 } finally {
                     // Try to run the global queue holding external events
                     module.eventQueue.unblock();
