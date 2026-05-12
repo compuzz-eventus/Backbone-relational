@@ -1418,7 +1418,7 @@
                     requests = [],
                     rel = this.getRelation(attr),
                     idsToFetch = rel && this.getIdsToFetch(rel, options.refresh),
-                    coll = rel.related instanceof module.Collection ? rel.related : rel.relatedCollection;
+                    coll = rel && (rel.related instanceof module.Collection ? rel.related : rel.relatedCollection);
 
                 if (idsToFetch && idsToFetch.length) {
                     var models = [],
