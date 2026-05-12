@@ -1248,7 +1248,7 @@
              * Override 'trigger' to queue 'change' and 'change:*' events
              */
             trigger: function (eventName) {
-                if (eventName.length > 5 && eventName.indexOf('change') === 0) {
+                if (eventName === 'change' || eventName.indexOf('change:') === 0) {
                     var dit = this,
                         args = arguments;
 
