@@ -1326,12 +1326,16 @@
                 this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
                 this._relations = {};
 
-                _.each(this.relations || [], _.bind(function (rel) {
-                    module.store.initializeRelation( this, rel, options );
-			}, this) );
-
-                this._isInitialized = true;
-                this.release();
+                try {
+                    _.each(this.relations || [], _.bind(function (rel) {
+                        module.store.initializeRelation( this, rel, options );
+                    }, this) );
+                    this._isInitialized = true;
+                } finally {
+                    // Always release the semaphore even if a relation init threw, otherwise the
+                    // model stays `isLocked()` forever and updateRelations becomes a no-op.
+                    this.release();
+                }
                 this.processQueue();
             },
 
