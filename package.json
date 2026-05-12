@@ -14,7 +14,7 @@
     "url": "https://github.com/compuzz-eventus/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start --single-run --browsers PhantomJS",
+    "test": "karma start --single-run --browsers ChromeHeadless",
     "test:debug": "karma start --no-single-run --auto-watch --browsers Chrome"
   },
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
@@ -27,19 +27,17 @@
   "devDependencies": {
     "aliasify": "^2.1.0",
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
-    "browserify": "^13.0.0",
-    "jquery": "^2.2.1",
-    "karma": "^0.13.22",
-    "karma-browserify": "^5.0.2",
-    "karma-chrome-launcher": "^0.2.2",
-    "karma-phantomjs-launcher": "^1.0.0",
-    "karma-qunit": "^0.1.9",
-    "lodash": "^4.17.11",
-    "phantomjs-prebuilt": "^2.1.6",
-    "qunitjs": "^1.22.0",
-    "semver": "^5.1.2",
-    "underscore": ">=1.7.0",
-    "watchify": "^3.7.0"
+    "browserify": "^17.0.1",
+    "jquery": "^2.2.4",
+    "karma": "^6.4.4",
+    "karma-browserify": "^8.1.0",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-qunit": "^4.2.1",
+    "lodash": "^4.17.21",
+    "qunit": "^2.25.0",
+    "semver": "^7.6.3",
+    "underscore": "^1.13.8",
+    "watchify": "^4.0.0"
   },
   "packageManager": "yarn@1.22.22"
 }
