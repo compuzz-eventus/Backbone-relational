@@ -23,7 +23,7 @@
     "backbone": "^1.6.0"
   },
   "license": "MIT",
-  "version": "0.10.5",
+  "version": "0.10.7",
   "devDependencies": {
     "aliasify": "^2.1.0",
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
