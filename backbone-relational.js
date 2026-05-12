@@ -882,7 +882,13 @@
             }, this) );
 
             // Fire the 'change:<key>' event if 'related' was updated
-            if (!options.silent && this.related !== oldRelated) {
+            if (this.related === oldRelated && (!this.related || _.isEmpty(this.related.changed))) {
+                // No real change in the related object: cleanup the spurious key Backbone.set put in
+                // `this.instance.changed`, so a queued `change` handler doesn't see a stale changed map.
+                if (this.instance.changed) {
+                    delete this.instance.changed[this.key];
+                }
+            } else if (!options.silent) {
                 var dit = this;
                 this.changed = true;
                 module.eventQueue.add(function () {
@@ -1502,10 +1508,7 @@
                 module.eventQueue.block();
 
                 // Duplicate backbone's behavior to allow separate key/value parameters, instead of a single 'attributes' object
-                var attributes,
-                    result,
-                    // Sauvegarde de l'objet changed actuel
-                    originalChanged = _.clone(this.changed || {});
+                var attributes, result;
 
                 if (_.isObject(key) || key == null) {
                     attributes = key;
@@ -1524,10 +1527,6 @@
 
                     result = Backbone.Model.prototype.set.apply(this, arguments);
 
-                    // Fusionner les changements de l'appel à set avec les changements originaux
-                    this.changed = _.extend({}, originalChanged, this.changed);
-
-
                     // Ideal place to set up relations, if this is the first time we're here for this model
                     if (!this._isInitialized && !this.isLocked()) {
                         this.constructor.initializeModelHierarchy();
@@ -1545,14 +1544,7 @@
                     }
 
                     if (attributes) {
-                        // Sauvegarde de l'objet changed avant updateRelations
-                        var beforeUpdateChanged = _.clone(this.changed);
-
                         this.updateRelations(attributes, options);
-
-                        // Restaurer l'objet changed après updateRelations
-                        // en fusionnant avec les changements qui auraient pu être ajoutés
-                        this.changed = _.extend({}, beforeUpdateChanged, this.changed);
                     }
                 } finally {
                     // Try to run the global queue holding external events
