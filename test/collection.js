@@ -135,10 +135,10 @@ QUnit.module( "Backbone.Relational.Collection", { setup: require('./setup/setup'
 		ok( cars.length === 2, "2 cars again" );
 
 		// Check setting `null`
-		// ok( _.isUndefined( cars.set( null ) ), "Set `null` empties collection" );
-		ok( _.isUndefined( cars.set( null ) ), "Set `null` causes noop on collection" );
-		console.log( cars, cars.length );
-		// ok( cars.length === 0, "All cars gone" );
+		// Backbone <= 1.6.1 returned `undefined`; 1.6.2+ returns the collection (for chaining).
+		// Either way, the no-op semantics (collection unchanged) are what matters.
+		var setNullResult = cars.set( null );
+		ok( _.isUndefined( setNullResult ) || setNullResult === cars, "Set `null` causes noop on collection" );
 		ok( cars.length === 2, "All cars still exist" );
 	});
 
