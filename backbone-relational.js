@@ -2011,10 +2011,10 @@
     };
 
     /**
-     * Override 'Backbone.Collection._removeModels' to trigger 'relational:remove'.
+     * Override 'module.Collection._removeModels' to trigger 'relational:remove'.
      */
-    var _removeModels = Backbone.Collection.prototype.___removeModels = Backbone.Collection.prototype._removeModels;
-    Backbone.Collection.prototype._removeModels = function (models, options) {
+    var _removeModels = module.Collection.prototype.___removeModels = module.Collection.prototype._removeModels;
+    module.Collection.prototype._removeModels = function (models, options) {
         // Short-circuit if this Collection doesn't hold RelationalModels
         if (!(this.model.prototype instanceof module.Model)) {
             return _removeModels.call(this, models, options);
