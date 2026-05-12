@@ -26,11 +26,11 @@
 <body>
 <div id="sidebar">
 	<a class="toc_title" href="#">
-		Backbone-relational.js <span class="version">(0.10.2)</span>
+		Backbone-relational.js <span class="version">(0.10.8)</span>
 	</a>
 
 	<ul>
-		<li class="link_out"><a href="https://github.com/PaulUithol/Backbone-relational">GitHub Repository</a></li>
+		<li class="link_out"><a href="https://github.com/compuzz-eventus/Backbone-relational">GitHub Repository</a></li>
 	</ul>
 
 	<a class="toc_title" href="#introduction">
@@ -142,8 +142,8 @@
 			after setting up a model's <q><a href="#RelationalModel-relations">relations</a></q>.
 		</p>
 		<p>
-			Backbone-relational is hosted on <a href="https://github.com/PaulUithol/Backbone-relational">GitHub</a>,
-			and is available under the <a href="https://github.com/PaulUithol/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
+			Backbone-relational is hosted on <a href="https://github.com/compuzz-eventus/Backbone-relational">GitHub</a>,
+			and is available under the <a href="https://github.com/compuzz-eventus/Backbone-relational/blob/master/LICENSE.txt">MIT license</a>.
 		</p>
 		<p>
 			Thanks to <a href="http://progressiveplanning.com">Progressive Planning</a> for allowing me the time to
@@ -161,19 +161,18 @@
 
 		<table>
 			<tr>
-				<td><a class="punch" href="https://raw.github.com/compuzz-eventus/Backbone-relational/branches/0.10.2/backbone-relational.js">Latest Release (0.10.2)</a></td>
+				<td><a class="punch" href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/0.10.8/backbone-relational.js">Latest Release (0.10.8)</a></td>
 				<td class="text"><i>~70kb. Full source, uncompressed, lots of comments.</i></td>
 			</tr>
 			<tr>
-				<td><a class="punch" href="https://raw.githubusercontent.com/PaulUithol/Backbone-relational/master/backbone-relational.js">Edge Version</a></td>
+				<td><a class="punch" href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/master/backbone-relational.js">Edge Version</a></td>
 			</tr>
 		</table>
 
 		<p>
-			Backbone-relational depends on <a href="http://backbonejs.org/">Backbone.js</a> <small>(>= 1.2.1)</small>,
-			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(> 1.7.0)</small> or <a href="https://lodash.com">Lodash</a> <small>(>= 3)</small> and
-			<a href="http://jquery.com">jQuery</a> <small>(> 1.7.0)</small> or
-			<a href="http://zeptojs.com/">Zepto</a>.
+			Backbone-relational depends on <a href="https://github.com/compuzz-eventus/backbone">Backbone.js (compuzz-eventus fork)</a> <small>(&gt;= 1.6.3)</small>,
+			which itself requires <a href="http://underscorejs.org">Underscore.js</a> <small>(&gt;= 1.8.3)</small> or <a href="https://lodash.com">Lodash</a> <small>(&gt;= 3)</small> and
+			<a href="http://jquery.com">jQuery</a> <small>(&gt;= 1.8.0)</small> &mdash; verified through jQuery 4.x.
 		</p>
 	</section>
 
@@ -1262,86 +1261,8 @@ User = Backbone.RelationalModel.extend();
 		<h2>Change Log</h2>
 
 		<p>
-			<em>From 0.10.8 onward this branch tracks the <a href="https://github.com/compuzz-eventus/Backbone-relational">compuzz-eventus fork</a>; earlier entries reference the original PaulUithol repository.</em>
+			<em>From 0.10.8 onward, this fork's release notes live in <a href="https://github.com/compuzz-eventus/Backbone-relational/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a>. The entries below cover the upstream PaulUithol releases (0.10.0 and earlier).</em>
 		</p>
-
-		<h4>Master
-			<small>
-				<span class="date">(future)</span> &ndash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.8...master">diff</a> &ndash;
-				<a href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/master/backbone-relational.js">download</a>
-			</small>
-		</h4>
-
-		<h4>0.10.8
-			<small>
-				<span class="date">(12 May 2026)</span> &ndash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.7...0.10.8">diff</a> &ndash;
-				<a href="https://raw.githubusercontent.com/compuzz-eventus/Backbone-relational/0.10.8/backbone-relational.js">download</a>
-			</small>
-		</h4>
-		<p>A focused bug-fix and hardening pass. No new features and no breaking change for code that doesn't rely on the previously-inconsistent batch <q>autoFetch.success</q> signature. Five of these fixes are pinned by new regression tests that fail when their fix is reverted.</p>
-		<ul>
-			<li>
-				<strong>HIGH</strong> &mdash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/2d99430"><q>2d99430</q></a>:
-				Shim <q>_.invoke</q> to <q>_.invokeMap</q> when running with Lodash 4 &mdash; without this, <q>Store.unregister</q> silently stopped calling <q>stopListening</q> on each Relation, leaking listeners.
-			</li>
-			<li>
-				<strong>HIGH</strong> &mdash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/0f88412"><q>0f88412</q></a>:
-				Guard the <q>coll</q> dereference in <q>getAsync</q> when <q>attr</q> is not a relation key &mdash; previously threw <q>Cannot read properties of undefined</q>.
-			</li>
-			<li>
-				<strong>HIGH</strong> &mdash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/52de949"><q>52de949</q></a>:
-				Null-guard <q>this.related</q> in <q>HasMany.removeRelated</q>, mirroring the existing guard in <q>HasOne.removeRelated</q>.
-			</li>
-			<li>
-				<strong>HIGH</strong> &mdash;
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/06d2f8c"><q>06d2f8c</q></a>:
-				<q>toJSON</q> now logs a warning instead of silently swallowing exceptions raised by nested <q>toJSON</q> calls.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/942e702"><q>942e702</q></a>:
-				Tighten the <q>trigger</q> filter to match only <q>change</q> / <q>change:&lt;attr&gt;</q> instead of any event whose name starts with <q>change</q> &mdash; events like <q>changeset</q> no longer pollute <q>_attributeChangeFired</q>.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/5455e41"><q>5455e41</q></a>:
-				<q>Model</q> constructor no longer mutates the caller's <q>options</q> when stripping <q>collection</q>.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/ef1f1d8"><q>ef1f1d8</q></a>:
-				Override <q>_removeModels</q> on <q>module.Collection.prototype</q> only, matching the other Collection overrides (<q>set</q>, <q>reset</q>, <q>sort</q>, <q>trigger</q>).
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/cc0ceb9"><q>cc0ceb9</q></a>:
-				<q>HasMany.onChange</q> now guards against recursive entry, mirroring <q>HasOne.onChange</q>.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/9193184"><q>9193184</q></a>:
-				<q>initializeRelations</q> releases its semaphore via <q>finally</q> &mdash; a throwing relation init no longer leaves the model permanently <q>isLocked()</q>.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/e9c2362"><q>e9c2362</q></a>:
-				<q>BlockingQueue.process</q> isolates handler exceptions per item so one broken listener doesn't drop the rest of the queued events.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/649a671"><q>649a671</q></a>:
-				<q>autoFetch.success</q> now fires once per requested id with <q>(model, response, options)</q> in both the batch and the per-model fetch paths.
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/609e334"><q>609e334</q></a>:
-				Fast-path <q>processOrphanRelations</q> when nothing is queued (called from every Model constructor).
-			</li>
-			<li>
-				<a href="https://github.com/compuzz-eventus/Backbone-relational/commit/284a651"><q>284a651</q></a>:
-				Five new regression tests pinning the highest-impact fixes (verified to fail when their fix is reverted).
-			</li>
-			<li>
-				Documentation: <code>docs/ARCHITECTURE.md</code> now covers the autoFetch system (&sect;4.3) and records the load-bearing <q>_.defaults</q> mutation in the Relation constructor as invariant #6 of &sect;10.
-			</li>
-		</ul>
 
 		<h4>0.10.0
 			<small>
