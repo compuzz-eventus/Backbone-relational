@@ -8,11 +8,11 @@ Documentation: http://backbonerelational.org
 
 ## Overview
 
-This repository contains the Backbone-relational library and its tests. The library is a single-file UMD module (`backbone-relational.js`) intended for use in browser environments alongside Backbone and Underscore (or Lodash). Tests run in Node via a happy-dom environment, so no browser is required for development.
+This repository contains the Backbone-relational library and its tests. The library source is a single file (`backbone-relational.js`, UMD) shipped alongside an ESM wrapper (`backbone-relational.mjs`), intended for use alongside Backbone and Underscore (or Lodash). The Vitest test suite runs in Node via happy-dom (no browser needed for day-to-day development) ; a small Playwright suite double-checks the script-tag distribution path in real browsers (`yarn test:browser`).
 
 ## Tech stack
 
-- **Library**: single-file UMD JavaScript (`backbone-relational.js`), ES2022
+- **Library**: ES2022, distributed as both UMD (`backbone-relational.js` — browser global, AMD, CommonJS) and ESM (`backbone-relational.mjs` — re-exports the UMD for native `import`). `package.json` `exports` routes consumers automatically.
 - **Peer dependency**: [Backbone.js](https://github.com/jashkenas/backbone) (this fork targets [`compuzz-eventus/backbone`](https://github.com/compuzz-eventus/backbone) ≥ 1.7.0)
 - **Utility**: Underscore (default), Lodash 4 also supported via the internal compat layer
 - **Test runner**: [Vitest](https://vitest.dev/) 4 with the `happy-dom` environment (139 tests, native `describe`/`it`/`expect`)
