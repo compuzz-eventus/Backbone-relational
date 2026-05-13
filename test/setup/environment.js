@@ -1,19 +1,14 @@
-var _ = (window._ = require('underscore'));
-var $ = (window.$ = require('jquery'));
-var Backbone = (window.Backbone = require('backbone'));
-Backbone.Relational = require('../../backbone-relational');
+// Imported by Vitest as a setupFile (see vitest.config.js).
+//
+// Side-effect import : `./objects.js` bootstraps the globals
+// (window.Backbone, window._, window.$, Backbone.Relational) and defines the
+// fixture models on `window`. We do it via import rather than re-doing the
+// setup here because ESM hoists imports — defining models requires those
+// globals to exist first.
+import './objects.js';
 
-// Sous Karma+browserify, tous les fichiers étaient bundlés dans une page unique,
-// donc `objects.js` (qui définit window.Zoo / Animal / Person / …) était toujours
-// évalué. Sous Vitest, chaque fichier de test est isolé : on doit charger
-// `objects.js` ici pour que les tests qui n'invoquent que `setup/setup.js`
-// trouvent quand même les modèles globaux.
-require('./objects');
-
-// La compatibilité QUnit 1.x est gérée par test/setup/qunit-shim.js (chargé en
-// premier via vitest.config setupFiles).
 if (!window.console) {
-	var names = [
+	const names = [
 		'log',
 		'debug',
 		'info',
@@ -32,26 +27,25 @@ if (!window.console) {
 		'profileEnd'
 	];
 	window.console = {};
-	for (var i = 0; i < names.length; ++i) window.console[names[i]] = function () {};
+	for (const name of names) window.console[name] = function () {};
 }
 
 window.requests = [];
 
 Backbone.ajax = function (settings) {
-	var callbackContext = settings.context || this,
-		dfd = new $.Deferred();
+	const callbackContext = settings.context || this;
+	let dfd = new $.Deferred();
 
 	dfd = _.extend(settings, dfd);
 
 	dfd.respond = function (status, responseText) {
 		/**
 		 * Trigger success/error with arguments like jQuery would:
-		 * // Success/Error
-		 * if ( isSuccess ) {
-		 *   deferred.resolveWith( callbackContext, [ success, statusText, jqXHR ] );
-		 * } else {
-		 *   deferred.rejectWith( callbackContext, [ jqXHR, statusText, error ] );
-		 * }
+		 *   if (isSuccess) {
+		 *     deferred.resolveWith(callbackContext, [success, statusText, jqXHR]);
+		 *   } else {
+		 *     deferred.rejectWith(callbackContext, [jqXHR, statusText, error]);
+		 *   }
 		 */
 		if ((status >= 200 && status < 300) || status === 304) {
 			_.isFunction(settings.success) && settings.success(responseText, 'success', dfd);
@@ -76,7 +70,7 @@ Backbone.ajax = function (settings) {
 
 Backbone.Model.prototype.url = function () {
 	// Use the 'resource_uri' if possible
-	var url = this.get('resource_uri');
+	let url = this.get('resource_uri');
 
 	// Try to have the collection construct a url
 	if (!url && this.collection) {

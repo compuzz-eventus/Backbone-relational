@@ -1,13 +1,21 @@
-var _ = (window._ = require('underscore'));
-var $ = (window.$ = require('jquery'));
-var Backbone = (window.Backbone = require('backbone'));
-Backbone.Relational = require('../../backbone-relational');
+import _ from 'underscore';
+import $ from 'jquery';
+import Backbone from 'backbone';
+import Relational from '../../backbone-relational.js';
+
+// Bootstrap globals once. Multiple imports of this file are no-ops because
+// ESM caches the module evaluation; the assignments below are also idempotent
+// thanks to module caching of underscore/jquery/backbone.
+window._ = _;
+window.$ = $;
+window.Backbone = Backbone;
+Backbone.Relational = Relational;
 
 /**
- * 'Zoo'
+ * Zoo
  */
 
-exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
+window.Zoo = Backbone.Relational.Model.extend({
 	urlRoot: '/zoo/',
 
 	relations: [
@@ -23,7 +31,6 @@ exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
 			}
 		},
 		{
-			// A simple HasMany without reverse relation
 			type: Backbone.Relational.HasMany,
 			key: 'visitors',
 			relatedModel: 'Visitor'
@@ -35,19 +42,18 @@ exports.Zoo = window.Zoo = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Animal = window.Animal = Backbone.Relational.Model.extend({
+window.Animal = Backbone.Relational.Model.extend({
 	urlRoot: '/animal/',
 
 	relations: [
 		{
-			// A simple HasOne without reverse relation
 			type: Backbone.Relational.HasOne,
 			key: 'favoriteFood',
 			relatedModel: 'Food'
 		}
 	],
 
-	// For validation testing. Wikipedia says elephants are reported up to 12.000 kg. Any more, we must've weighted wrong ;).
+	// For validation testing. Wikipedia says elephants are reported up to 12.000 kg.
 	validate: function (attrs) {
 		if (attrs.species === 'elephant' && attrs.weight && attrs.weight > 12000) {
 			return 'Too heavy.';
@@ -59,21 +65,21 @@ exports.Animal = window.Animal = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.AnimalCollection = window.AnimalCollection = Backbone.Relational.Collection.extend({
-	model: Animal
+window.AnimalCollection = Backbone.Relational.Collection.extend({
+	model: window.Animal
 });
 
-exports.Food = window.Food = Backbone.Relational.Model.extend({
+window.Food = Backbone.Relational.Model.extend({
 	urlRoot: '/food/'
 });
 
-exports.Visitor = window.Visitor = Backbone.Relational.Model.extend();
+window.Visitor = Backbone.Relational.Model.extend();
 
 /**
  * House/Person/Job/Company
  */
 
-exports.House = window.House = Backbone.Relational.Model.extend({
+window.House = Backbone.Relational.Model.extend({
 	relations: [
 		{
 			type: Backbone.Relational.HasMany,
@@ -91,7 +97,7 @@ exports.House = window.House = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.User = window.User = Backbone.Relational.Model.extend({
+window.User = Backbone.Relational.Model.extend({
 	urlRoot: '/user/',
 
 	toString: function () {
@@ -99,7 +105,7 @@ exports.User = window.User = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Person = window.Person = Backbone.Relational.Model.extend({
+window.Person = Backbone.Relational.Model.extend({
 	relations: [
 		{
 			// Create a cozy, recursive, one-to-one relationship
@@ -138,11 +144,11 @@ exports.Person = window.Person = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.PersonCollection = window.PersonCollection = Backbone.Relational.Collection.extend({
-	model: Person
+window.PersonCollection = Backbone.Relational.Collection.extend({
+	model: window.Person
 });
 
-exports.Password = window.Password = Backbone.Relational.Model.extend({
+window.Password = Backbone.Relational.Model.extend({
 	relations: [
 		{
 			type: Backbone.Relational.HasOne,
@@ -160,8 +166,8 @@ exports.Password = window.Password = Backbone.Relational.Model.extend({
 	}
 });
 
-// A link table between 'Person' and 'Company', to achieve many-to-many relations
-exports.Job = window.Job = Backbone.Relational.Model.extend({
+// A link table between 'Person' and 'Company' for many-to-many.
+window.Job = Backbone.Relational.Model.extend({
 	defaults: {
 		startDate: null,
 		endDate: null
@@ -172,7 +178,7 @@ exports.Job = window.Job = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Company = window.Company = Backbone.Relational.Model.extend({
+window.Company = Backbone.Relational.Model.extend({
 	relations: [
 		{
 			type: 'HasMany',
@@ -200,7 +206,7 @@ exports.Company = window.Company = Backbone.Relational.Model.extend({
 /**
  * Node/NodeList
  */
-exports.Node = window.Node = Backbone.Relational.Model.extend({
+window.Node = Backbone.Relational.Model.extend({
 	urlRoot: '/node/',
 
 	relations: [
@@ -218,15 +224,15 @@ exports.Node = window.Node = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.NodeList = window.NodeList = Backbone.Relational.Collection.extend({
-	model: Node
+window.NodeList = Backbone.Relational.Collection.extend({
+	model: window.Node
 });
 
 /**
  * Customer/Address/Shop/Agent
  */
 
-exports.Customer = window.Customer = Backbone.Relational.Model.extend({
+window.Customer = Backbone.Relational.Model.extend({
 	urlRoot: '/customer/',
 
 	toString: function () {
@@ -234,8 +240,8 @@ exports.Customer = window.Customer = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.CustomerCollection = window.CustomerCollection = Backbone.Relational.Collection.extend({
-	model: Customer,
+window.CustomerCollection = Backbone.Relational.Collection.extend({
+	model: window.Customer,
 
 	initialize: function (models, options) {
 		options || (options = {});
@@ -243,7 +249,7 @@ exports.CustomerCollection = window.CustomerCollection = Backbone.Relational.Col
 	}
 });
 
-exports.Address = window.Address = Backbone.Relational.Model.extend({
+window.Address = Backbone.Relational.Model.extend({
 	urlRoot: '/address/',
 
 	toString: function () {
@@ -251,7 +257,7 @@ exports.Address = window.Address = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Shop = window.Shop = Backbone.Relational.Model.extend({
+window.Shop = Backbone.Relational.Model.extend({
 	relations: [
 		{
 			type: Backbone.Relational.HasMany,
@@ -283,7 +289,7 @@ exports.Shop = window.Shop = Backbone.Relational.Model.extend({
 	}
 });
 
-exports.Agent = window.Agent = Backbone.Relational.Model.extend({
+window.Agent = Backbone.Relational.Model.extend({
 	urlRoot: '/agent/',
 
 	relations: [

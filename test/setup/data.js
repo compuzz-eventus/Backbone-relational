@@ -1,10 +1,10 @@
-var Objects = require('./objects');
+import { reset } from './setup.js';
 
 /**
- * Initialize a few models that are used in a large number of tests
+ * Initialize a few models that are used in a large number of tests.
  */
-module.exports = function initObjects() {
-	require('./setup').reset();
+export default function initObjects() {
+	reset();
 
 	window.person1 = new Person({
 		id: 'person-1',
@@ -32,7 +32,8 @@ module.exports = function initObjects() {
 		ceo: {
 			name: 'Big Boy'
 		},
-		employees: [{ person: 'person-3' }], // uses the 'Job' link table to achieve many-to-many. No 'id' specified!
+		// Uses the 'Job' link table to achieve many-to-many. No 'id' specified!
+		employees: [{ person: 'person-3' }],
 		resource_uri: 'company-1'
 	});
 
@@ -56,4 +57,4 @@ module.exports = function initObjects() {
 		occupants: [],
 		resource_uri: 'house-2'
 	});
-};
+}

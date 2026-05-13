@@ -209,10 +209,9 @@ export default [
 		}
 	},
 
-	// Tests Vitest natifs. `test/setup/**` reste en CommonJS car les setup
-	// files utilisent encore `require()`/`exports`.
+	// Tests Vitest natifs et setup files, tous en ESM.
 	{
-		files: ['test/*.js'],
+		files: ['test/**/*.js'],
 		languageOptions: {
 			sourceType: 'module'
 		}
