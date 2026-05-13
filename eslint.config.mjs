@@ -15,7 +15,7 @@ import globals from 'globals';
  */
 export default [
 	{
-		ignores: ['node_modules/**', '.yarn/**', 'bower_components/**', 'static/**', 'docs/**', 'index.html']
+		ignores: ['node_modules/**', '.yarn/**', 'static/**', 'docs/**', 'index.html']
 	},
 
 	// Configuration commune au code source et aux tests.
