@@ -527,7 +527,7 @@
 		 */
 		checkId: function (model, id) {
 			const coll = this.getCollection(model),
-				duplicate = coll && coll.get(id);
+				duplicate = coll?.get(id);
 
 			if (duplicate && model !== duplicate) {
 				if (module.showWarnings && typeof console !== 'undefined') {
@@ -1339,7 +1339,7 @@
 				// Defer 'processQueue', so that when 'Relation.createModels' is used we trigger 'HasMany'
 				// collection events only after the model is really fully set up.
 				// Example: event for "p.on( 'add:jobs' )" -> "p.get('jobs').add( { company: c.id, person: p.id } )".
-				if (options && options.collection) {
+				if (options?.collection) {
 					const dit = this,
 						collection = (this.collection = options.collection);
 
@@ -1622,7 +1622,7 @@
 										model.trigger('destroy', model, model.collection, options);
 									});
 
-									options.error && options.error.apply(models, arguments);
+									options.error?.apply(models, arguments);
 								},
 								url: setUrl
 							},
@@ -1660,7 +1660,7 @@
 											if (_.contains(createdModels, model)) {
 												model.trigger('destroy', model, model.collection, options);
 											}
-											options.error && options.error.apply(models, arguments);
+											options.error?.apply(models, arguments);
 										}
 									},
 									options
@@ -1822,7 +1822,7 @@
 					// In case of `wait: true`, Backbone will simply push whatever's passed into `save` into attributes.
 					// We'll want to get this information into the JSON, even if it doesn't conform to our normal
 					// expectations of what's contained in it (no model/collection for a relation, etc).
-					if (value === null && options && options.wait) {
+					if (value === null && options?.wait) {
 						value = related;
 					}
 
@@ -2120,7 +2120,7 @@
 				model = new this.model(attrs, options);
 			}
 
-			if (model && model.validationError) {
+			if (model?.validationError) {
 				this.trigger('invalid', this, attrs, options);
 				model = false;
 			}
@@ -2140,7 +2140,7 @@
 			return set.call(this, models, options);
 		}
 
-		if (options && options.parse) {
+		if (options?.parse) {
 			models = this.parse(models, options);
 		}
 
@@ -2207,7 +2207,7 @@
 		_.each(
 			models,
 			_.bind(function (model) {
-				model = this.get(model) || (model && this.get(model.cid));
+				model = this.get(model) || this.get(model?.cid);
 				model && toRemove.push(model);
 			}, this)
 		);
