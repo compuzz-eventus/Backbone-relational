@@ -1,38 +1,42 @@
-QUnit.module('Backbone.Relational.Semaphore ', { setup: require('./setup/setup').reset });
+import { describe, it, beforeEach, expect } from 'vitest';
+import { reset } from './setup/setup.js';
 
-QUnit.test('Unbounded', 10, function () {
-	var semaphore = _.extend({}, Backbone.Relational.Semaphore);
-	ok(!semaphore.isLocked(), 'Semaphore is not locked initially');
-	semaphore.acquire();
-	ok(semaphore.isLocked(), 'Semaphore is locked after acquire');
-	semaphore.acquire();
-	equal(semaphore._permitsUsed, 2, '_permitsUsed should be incremented 2 times');
+// Pilot for the QUnit → native Vitest migration. See docs/TESTING_MIGRATION.md
+// for the full plan. Backbone and Underscore remain global via
+// test/setup/environment.js (loaded as a setupFile).
 
-	semaphore.setAvailablePermits(4);
-	equal(semaphore._permitsAvailable, 4, '_permitsAvailable should be 4');
+describe('Backbone.Relational.Semaphore', () => {
+	beforeEach(reset);
 
-	semaphore.acquire();
-	semaphore.acquire();
-	equal(semaphore._permitsUsed, 4, '_permitsUsed should be incremented 4 times');
+	it('Unbounded — acquire/release with optional permit cap', () => {
+		const semaphore = _.extend({}, Backbone.Relational.Semaphore);
 
-	try {
+		expect(semaphore.isLocked()).toBe(false);
+
 		semaphore.acquire();
-	} catch (ex) {
-		ok(true, 'Error thrown when attempting to acquire too often');
-	}
+		expect(semaphore.isLocked()).toBe(true);
 
-	semaphore.release();
-	equal(semaphore._permitsUsed, 3, '_permitsUsed should be decremented to 3');
+		semaphore.acquire();
+		expect(semaphore._permitsUsed).toBe(2);
 
-	semaphore.release();
-	semaphore.release();
-	semaphore.release();
-	equal(semaphore._permitsUsed, 0, '_permitsUsed should be decremented to 0');
-	ok(!semaphore.isLocked(), 'Semaphore is not locked when all permits are released');
+		semaphore.setAvailablePermits(4);
+		expect(semaphore._permitsAvailable).toBe(4);
 
-	try {
+		semaphore.acquire();
+		semaphore.acquire();
+		expect(semaphore._permitsUsed).toBe(4);
+
+		expect(() => semaphore.acquire()).toThrow('Max permits acquired');
+
 		semaphore.release();
-	} catch (ex) {
-		ok(true, 'Error thrown when attempting to release too often');
-	}
+		expect(semaphore._permitsUsed).toBe(3);
+
+		semaphore.release();
+		semaphore.release();
+		semaphore.release();
+		expect(semaphore._permitsUsed).toBe(0);
+		expect(semaphore.isLocked()).toBe(false);
+
+		expect(() => semaphore.release()).toThrow('All permits released');
+	});
 });
