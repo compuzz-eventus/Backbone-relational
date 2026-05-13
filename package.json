@@ -26,6 +26,9 @@
   "peerDependencies": {
     "backbone": ">=1.7.0"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "version": "0.10.9",
   "devDependencies": {
