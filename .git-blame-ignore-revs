@@ -1,0 +1,10 @@
+# Commits à ignorer pour `git blame` : passages massifs de formatage qui
+# masqueraient l'auteur réel de chaque ligne.
+#
+# Activer localement avec :
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub utilise ce fichier automatiquement dans l'interface "blame".
+
+# style: apply Prettier across the codebase
+beeea670010562305ea03974ae6153d31f57d468
