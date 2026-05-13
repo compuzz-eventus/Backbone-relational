@@ -238,7 +238,12 @@
 	};
 	_.extend(module.Store.prototype, Backbone.Events, {
 		/**
-		 * Create a new `Relation`.
+		 * Create a new `Relation`. Called by the Model constructor for each
+		 * descriptor in `relations`.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 * @param {Backbone.Relational.Model} [model]
 		 * @param {Object} relation
 		 * @param {Object} [options]
@@ -264,6 +269,17 @@
 		 * @memberof Backbone.Relational.Store
 		 * @instance
 		 * @param {Object} scope Any object whose keys are class names.
+		 * @example
+		 * Backbone.Relational.store.addModelScope(MyApp.models);
+		 *
+		 * // Now this works even though Author isn't on window :
+		 * const Post = Backbone.Relational.Model.extend({
+		 *   relations: [{
+		 *     type: Backbone.Relational.HasOne,
+		 *     key: 'author',
+		 *     relatedModel: 'Author'  // resolved via MyApp.models.Author
+		 *   }]
+		 * });
 		 */
 		addModelScope: function (scope) {
 			this._modelScopes.push(scope);
@@ -281,11 +297,14 @@
 		},
 
 		/**
-		 * Add a set of subModelTypes to the store, that can be used to resolve the '_superModel'
-		 * for a model later in 'setupSuperModel'.
+		 * Register a subModelTypes mapping. Used internally to resolve the
+		 * `_superModel` of each model later in `setupSuperModel`.
 		 *
-		 * @param {Backbone.Relational.Model} subModelTypes
-		 * @param {Backbone.Relational.Model} superModelType
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
+		 * @param {Object} subModelTypes
+		 * @param {Function} superModelType
 		 */
 		addSubModels: function (subModelTypes, superModelType) {
 			this._subModels.push({
@@ -295,10 +314,14 @@
 		},
 
 		/**
-		 * Check if the given modelType is registered as another model's subModel. If so, add it to the super model's
-		 * '_subModels', and set the modelType's '_superModel', '_subModelTypeName', and '_subModelTypeAttribute'.
+		 * If `modelType` is registered as a subModel via `addSubModels`,
+		 * wire up its `_superModel`, `_subModelTypeName`, and
+		 * `_subModelTypeAttribute` so polymorphic resolution works.
 		 *
-		 * @param {Backbone.Relational.Model} modelType
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
+		 * @param {Function} modelType
 		 */
 		setupSuperModel: function (modelType) {
 			_.find(
@@ -327,13 +350,15 @@
 		},
 
 		/**
-		 * Add a reverse relation. Is added to the 'relations' property on model's prototype, and to
-		 * existing instances of 'model' in the store as well.
+		 * Register a reverse relation : added to the `relations` prototype
+		 * of the target model AND retro-fitted on existing instances. The
+		 * usual entry point is the `reverseRelation` option on a forward
+		 * relation, not this method.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 * @param {Object} relation
-		 * @param {Backbone.Relational.Model} relation.model
-		 * @param {String} relation.type
-		 * @param {String} relation.key
-		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function (relation) {
 			const exists = _.any(this._reverseRelations, (rel) => {
@@ -350,8 +375,13 @@
 		},
 
 		/**
-		 * Deposit a `relation` for which the `relatedModel` can't be resolved at the moment.
+		 * Deposit a `relation` whose `relatedModel` string can't be
+		 * resolved yet. Retried by `processOrphanRelations` whenever a new
+		 * model is created.
 		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 * @param {Object} relation
 		 */
 		addOrphanRelation: function (relation) {
@@ -367,7 +397,11 @@
 		},
 
 		/**
-		 * Try to initialize any `_orphanRelation`s
+		 * Retry every orphan relation. Called by every Model constructor.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 */
 		processOrphanRelations: function () {
 			// Called from every Model constructor; bail out fast when there's nothing to resolve.
@@ -388,10 +422,11 @@
 		},
 
 		/**
-		 *
-		 * @param {Backbone.Relational.Model.constructor} type
-		 * @param {Object} relation
+		 * @memberof Backbone.Relational.Store
+		 * @instance
 		 * @private
+		 * @param {Function} type
+		 * @param {Object} relation
 		 */
 		_addRelation: function (type, relation) {
 			if (!type.prototype.relations) {
@@ -408,7 +443,11 @@
 		},
 
 		/**
-		 * Add a 'relation' to all existing instances of 'relation.model' in the store
+		 * Apply a relation to every existing instance of its target model.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 * @param {Object} relation
 		 */
 		retroFitRelation: function (relation) {
@@ -491,6 +530,15 @@
 			return type;
 		},
 
+		/**
+		 * Create the internal collection used by the store for `type`.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
+		 * @param {Function|Backbone.Relational.Model} type
+		 * @returns {?Backbone.Relational.Collection}
+		 */
 		_createCollection: function (type) {
 			let coll;
 
@@ -511,10 +559,15 @@
 		},
 
 		/**
-		 * Find the attribute that is to be used as the `id` on a given object
-		 * @param type
-		 * @param {String|Number|Object|Backbone.Relational.Model} item
-		 * @return {String|Number}
+		 * Extract the id of `item`, whatever form it takes (string/number,
+		 * Model instance, or attributes hash containing the idAttribute).
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
+		 * @param {Function} type
+		 * @param {string|number|Object|Backbone.Relational.Model} item
+		 * @returns {?(string|number)}
 		 */
 		resolveIdForItem: function (type, item) {
 			let id = _.isString(item) || _.isNumber(item) ? item : null;
@@ -586,9 +639,15 @@
 		},
 
 		/**
-		 * Check if the given model may use the given `id`
-		 * @param model
-		 * @param [id]
+		 * Validate that `model` can claim `id` — i.e. no other instance of
+		 * the same type already owns it. Throws if a duplicate is detected.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
+		 * @param {Backbone.Relational.Model} model
+		 * @param {string|number} [id]
+		 * @throws {Error} On duplicate id.
 		 */
 		checkId: function (model, id) {
 			const coll = this.getCollection(model),
@@ -606,7 +665,12 @@
 		},
 
 		/**
-		 * Explicitly update a model's id in its store collection
+		 * Refresh a model's id-based index in the store collection. Called
+		 * by `Model.set` when the id changes.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @private
 		 * @param {Backbone.Relational.Model} model
 		 */
 		update: function (model) {
@@ -634,6 +698,12 @@
 		 * @param {Backbone.Relational.Model|Backbone.Relational.Collection|Function} type
 		 *     A model instance to unregister, a collection (all its models),
 		 *     or a model class (every instance of that type).
+		 * @example
+		 * // Drop a single instance
+		 * Backbone.Relational.store.unregister(animal);
+		 *
+		 * // Drop every Animal in the store
+		 * Backbone.Relational.store.unregister(Animal);
 		 */
 		unregister: function (type) {
 			let coll, models;
@@ -686,6 +756,13 @@
 		 *
 		 * @memberof Backbone.Relational.Store
 		 * @instance
+		 * @example
+		 * // In a Vitest setup file
+		 * import { beforeEach } from 'vitest';
+		 * beforeEach(() => {
+		 *   Backbone.Relational.store.reset();
+		 *   Backbone.Relational.store.addModelScope(window);
+		 * });
 		 */
 		reset: function () {
 			this.stopListening();
@@ -848,8 +925,10 @@
 		related: null,
 
 		/**
-		 * Check several pre-conditions.
-		 * @return {Boolean} True if pre-conditions are satisfied, false if they're not.
+		 * Check pre-conditions before wiring the relation. Logs warnings
+		 * and returns false on misconfiguration.
+		 * @private
+		 * @returns {boolean}
 		 */
 		checkPreconditions: function () {
 			const i = this.instance,
@@ -913,8 +992,10 @@
 		},
 
 		/**
-		 * Set the related model(s) for this relation
-		 * @param {Backbone.Model|module.Collection} related
+		 * Replace this relation's `related` reference and the corresponding
+		 * attribute on the host model.
+		 * @private
+		 * @param {Backbone.Model|Backbone.Relational.Collection} related
 		 */
 		setRelated: function (related) {
 			this.related = related;
@@ -922,10 +1003,10 @@
 		},
 
 		/**
-		 * Determine if a relation (on a different RelationalModel) is the reverse
-		 * relation of the current one.
-		 * @param {Backbone.Relation} relation
-		 * @return {Boolean}
+		 * Test if `relation` (on a sibling model) is the reverse of this one.
+		 * @private
+		 * @param {Backbone.Relational.Relation} relation
+		 * @returns {boolean}
 		 */
 		_isReverseRelation: function (relation) {
 			return (
@@ -936,10 +1017,11 @@
 		},
 
 		/**
-		 * Get the reverse relations (pointing back to 'this.key' on 'this.instance') for the currently related model(s).
-		 * @param {Backbone.Relational.Model} [model] Get the reverse relations for a specific model.
-		 *    If not specified, 'this.related' is used.
-		 * @return {Backbone.Relation[]}
+		 * Reverse-relation instances pointing back to this one.
+		 * @private
+		 * @param {Backbone.Relational.Model} [model] If omitted, uses
+		 *     `this.related`.
+		 * @returns {Backbone.Relational.Relation[]}
 		 */
 		getReverseRelations: function (model) {
 			const reverseRelations = [];
@@ -964,8 +1046,10 @@
 		},
 
 		/**
-		 * When `this.instance` is destroyed, cleanup our relations.
-		 * Get reverse relation, call removeRelated on each.
+		 * Tear down this relation when the host model is destroyed. Removes
+		 * the model from each reverse relation and stops listening on the
+		 * store.
+		 * @private
 		 */
 		destroy: function () {
 			this.stopListening();
@@ -1015,9 +1099,11 @@
 		},
 
 		/**
-		 * Find related Models.
+		 * Resolve and return the related model from the current
+		 * `keyContents`. Returns `null` if nothing matches.
+		 * @private
 		 * @param {Object} [options]
-		 * @return {Backbone.Model}
+		 * @returns {?Backbone.Model}
 		 */
 		findRelated: function (options) {
 			let related = null;
@@ -1041,8 +1127,9 @@
 		},
 
 		/**
-		 * Normalize and reduce `keyContents` to an `id`, for easier comparison
-		 * @param {String|Number|Backbone.Model} keyContents
+		 * Normalize `keyContents` to an id for easier comparison.
+		 * @private
+		 * @param {string|number|Backbone.Model} keyContents
 		 */
 		setKeyContents: function (keyContents) {
 			this.keyContents = keyContents;
@@ -1050,8 +1137,9 @@
 		},
 
 		/**
-		 * Event handler for `change:<key>`.
-		 * If the key is changed, notify old & new reverse relations and initialize the new relation.
+		 * Internal `change:<key>` handler. Re-wires the relation to the new
+		 * target and propagates the change to old/new reverse relations.
+		 * @private
 		 */
 		onChange: function (model, attr, options) {
 			// Don't accept recursive calls to onChange (like onChange->findRelated->findOrCreate->initializeRelations->addRelated->onChange)
@@ -1112,7 +1200,9 @@
 		},
 
 		/**
-		 * If a new 'this.relatedModel' appears in the 'store', try to match it to the last set 'keyContents'
+		 * When a new `relatedModel` lands in the store, see if its id
+		 * matches a pending `keyContents` reference here.
+		 * @private
 		 */
 		tryAddRelated: function (model, coll, options) {
 			if ((this.keyId || this.keyId === 0) && model.id === this.keyId) {
@@ -1195,10 +1285,12 @@
 		},
 
 		/**
-		 * Bind events and setup collectionKeys for a collection that is to be used as the backing store for a HasMany.
-		 * If no 'collection' is supplied, a new collection will be created of the specified 'collectionType' option.
-		 * @param {module.Collection} [collection]
-		 * @return {module.Collection}
+		 * Bind events and `collectionKey` on a HasMany's backing collection.
+		 * Creates a new collection of `collectionType` if `collection` is
+		 * omitted.
+		 * @private
+		 * @param {Backbone.Relational.Collection} [collection]
+		 * @returns {Backbone.Relational.Collection}
 		 */
 		_prepareCollection: function (collection) {
 			if (this.related) {
@@ -1241,9 +1333,10 @@
 		},
 
 		/**
-		 * Find related Models.
+		 * Resolve the related collection from the current `keyContents`.
+		 * @private
 		 * @param {Object} [options]
-		 * @return {module.Collection}
+		 * @returns {Backbone.Relational.Collection}
 		 */
 		findRelated: function (options) {
 			let related = null;
@@ -1297,8 +1390,9 @@
 		},
 
 		/**
-		 * Normalize and reduce `keyContents` to a list of `ids`, for easier comparison
-		 * @param {String|Number|String[]|Number[]|module.Collection} keyContents
+		 * Normalize `keyContents` to a list of ids for easier comparison.
+		 * @private
+		 * @param {string|number|Array|Backbone.Relational.Collection} keyContents
 		 */
 		setKeyContents: function (keyContents) {
 			this.keyContents = keyContents instanceof module.Collection ? keyContents : null;
@@ -1322,8 +1416,9 @@
 		},
 
 		/**
-		 * Event handler for `change:<key>`.
-		 * If the contents of the key are changed, notify old & new reverse relations and initialize the new relation.
+		 * Internal `change:<key>` handler for HasMany. Diffs old/new
+		 * contents and emits `add`/`remove`/`reset` accordingly.
+		 * @private
 		 */
 		onChange: function (model, attr, options) {
 			// Don't accept recursive calls to onChange (mirrors HasOne.onChange).
@@ -1356,8 +1451,9 @@
 		},
 
 		/**
-		 * When a model is added to a 'HasMany', trigger 'add' on 'this.instance' and notify reverse relations.
-		 * (should be 'HasOne', must set 'this.instance' as their related).
+		 * Internal: triggers `add` on the host and notifies the reverse
+		 * relation (HasOne side) of the new pointer.
+		 * @private
 		 */
 		handleAddition: function (model, coll, options) {
 			//console.debug('handleAddition called; args=%o', arguments);
@@ -1380,8 +1476,9 @@
 		},
 
 		/**
-		 * When a model is removed from a 'HasMany', trigger 'remove' on 'this.instance' and notify reverse relations.
-		 * (should be 'HasOne', which should be nullified)
+		 * Internal: triggers `remove` on the host and clears the reverse
+		 * pointer (HasOne) on the removed item.
+		 * @private
 		 */
 		handleRemoval: function (model, coll, options) {
 			//console.debug('handleRemoval called; args=%o', arguments);
@@ -1411,6 +1508,9 @@
 				});
 		},
 
+		/**
+		 * @private
+		 */
 		tryAddRelated: function (model, coll, options) {
 			const item = _.contains(this.keyIds, model.id);
 
@@ -1533,7 +1633,11 @@
 			},
 
 			/**
-			 * Override 'trigger' to queue 'change' and 'change:*' events
+			 * `Backbone.Events.trigger` override that queues `change` and
+			 * `change:*` events through `eventQueue` until all relations
+			 * are stabilized. Public-facing behavior is unchanged ;
+			 * consumers can call `.trigger()` as before.
+			 * @private
 			 */
 			trigger: function (eventName) {
 				if (eventName === 'change' || eventName.indexOf('change:') === 0) {
@@ -1591,8 +1695,9 @@
 			},
 
 			/**
-			 * Initialize Relations present in this.relations; determine the type (HasOne/HasMany), then creates a new instance.
-			 * Invoked in the first call so 'set' (which is made from the Backbone.Model constructor).
+			 * Build a Relation instance for each entry in `this.relations`.
+			 * Called from the first `set()` triggered by the constructor.
+			 * @private
 			 */
 			initializeRelations: function (options) {
 				this.acquire(); // Setting up relations often also involve calls to 'set', and we only want to enter this function once
@@ -1615,8 +1720,9 @@
 			},
 
 			/**
-			 * When new values are set, notify this model's relations (also if options.silent is set).
-			 * (called from `set`; Relation.setRelated locks this model before calling 'set' on it to prevent loops)
+			 * Notify this model's relations about the attributes that
+			 * changed in the current `set()`. Internal — called by `set`.
+			 * @private
 			 * @param {Object} [changedAttrs]
 			 * @param {Object} [options]
 			 */
@@ -1647,14 +1753,21 @@
 			},
 
 			/**
-			 * Either add to the queue (if we're not initialized yet), or execute right away.
+			 * Defer `func` until this model is fully initialized, then run
+			 * it. If init is already complete, `func` runs synchronously.
+			 * Used by Relation handlers that need a stable model state.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
+			 * @param {Function} func
 			 */
 			queue: function (func) {
 				this._queue.add(func);
 			},
 
 			/**
-			 * Process _queue
+			 * Drain this model's deferred-action queue. Internal.
+			 * @private
 			 */
 			processQueue: function () {
 				if (this._isInitialized && !this._deferProcessing && this._queue.isBlocked()) {
@@ -1670,6 +1783,11 @@
 			 * @param {string} attr The relation key to look for.
 			 * @returns {?Backbone.Relational.Relation} The Relation
 			 *     instance, or `null` if no relation matches `attr`.
+			 * @example
+			 * const rel = post.getRelation('author');
+			 * if (rel) {
+			 *   console.log(rel.type, rel.key, rel.relatedModel);
+			 * }
 			 */
 			getRelation: function (attr) {
 				return this._relations[attr];
@@ -1928,7 +2046,22 @@
 			},
 
 			/**
-			 * Convert relations to JSON, omits them when required
+			 * Serialize the model to a plain object. Each relation is
+			 * serialized according to its `includeInJSON` setting :
+			 *   - `true` → full `relatedModel.toJSON()`
+			 *   - `'id'` → just the id
+			 *   - `['k1', 'k2']` → projection
+			 *   - `false` → omitted
+			 *
+			 * Cycle-safe : a model already visited in the current pass is
+			 * replaced with `{id}` to prevent stack overflows.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
+			 * @param {Object} [options] `options._visited` carries the
+			 *     in-flight visited set ; pass the same options object
+			 *     through nested calls to preserve it.
+			 * @returns {Object}
 			 */
 			toJSON: function (options) {
 				// If this Model has already been fully serialized in this branch once, return to avoid loops
@@ -2052,9 +2185,15 @@
 		},
 		{
 			/**
+			 * Class-setup hook. Called automatically by the overridden
+			 * `extend()` whenever a subclass is created — registers reverse
+			 * relations from `relations` against the store. Override only if
+			 * you really need to customize how a class registers itself.
 			 *
-			 * @param superModel
-			 * @returns {Backbone.Relational.Model.constructor}
+			 * @memberof Backbone.Relational.Model
+			 * @static
+			 * @param {Function} [superModel]
+			 * @returns {Function} The class (this), for chaining.
 			 */
 			setup: function (superModel) {
 				// We don't want to share a relations array with a parent, as this will cause problems with reverse
@@ -2110,10 +2249,15 @@
 			},
 
 			/**
-			 * Create a 'Backbone.Model' instance based on 'attributes'.
+			 * Instantiate the right concrete class given raw attributes.
+			 * Resolves `subModelTypes` so polymorphic data (`{type: 'dog'}`)
+			 * lands on the matching subclass.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @static
 			 * @param {Object} attributes
 			 * @param {Object} [options]
-			 * @return {Backbone.Model}
+			 * @returns {Backbone.Relational.Model}
 			 */
 			build: function (attributes, options) {
 				// 'build' is a possible entrypoint; it's possible no model hierarchy has been determined yet.
@@ -2126,13 +2270,13 @@
 			},
 
 			/**
-			 * Determines what type of (sub)model should be built if applicable.
-			 * Looks up the proper subModelType in 'this._subModels', recursing into
-			 * types until a match is found.  Returns the applicable 'Backbone.Model'
-			 * or null if no match is found.
-			 * @param {Backbone.Model} type
+			 * Walk the `subModelTypes` tree to find which class should be
+			 * instantiated for `attributes`. Returns the resolved class
+			 * (or `null` if no match).
+			 * @private
+			 * @param {Function} type
 			 * @param {Object} attributes
-			 * @return {Backbone.Model}
+			 * @returns {?Function}
 			 */
 			_findSubModelType: function (type, attributes) {
 				if (type._subModels && type.prototype.subModelTypeAttribute in attributes) {
@@ -2153,7 +2297,9 @@
 			},
 
 			/**
-			 *
+			 * Set up the super/sub model graph for this class. Called by
+			 * `setup` and the first call to `build`.
+			 * @private
 			 */
 			initializeModelHierarchy: function () {
 				// Inherit any relations that have been defined in the parent model.
@@ -2171,6 +2317,10 @@
 				}
 			},
 
+			/**
+			 * Copy relations from the super-model into this class's prototype.
+			 * @private
+			 */
 			inheritRelations: function () {
 				// Bail out if we've been here before.
 				if (!_.isUndefined(this._superModel) && !_.isNull(this._superModel)) {
@@ -2234,6 +2384,15 @@
 			 * @param {boolean} [options.parse=false] Run `model.parse()`
 			 *     on `attributes` before the merge/create.
 			 * @returns {?Backbone.Relational.Model}
+			 * @example
+			 * // Get-or-create from raw data
+			 * const author = Author.findOrCreate({ id: 1, name: 'Asimov' });
+			 *
+			 * // Pure lookup by id (no creation)
+			 * const cached = Author.findOrCreate(1, { create: false });
+			 *
+			 * // Keep existing attributes if already in store
+			 * Author.findOrCreate({ id: 1, name: 'NEW' }, { merge: false });
 			 */
 			findOrCreate: function (attributes, options) {
 				options || (options = {});
