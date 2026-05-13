@@ -16,6 +16,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -33,6 +34,7 @@
   "version": "0.10.9",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.6",
     "backbone": "github:compuzz-eventus/backbone#26271ba9d892d625e70dbb265fa2d9ff11256011",
     "eslint": "10",
     "eslint-config-prettier": "^10.1.8",

@@ -3,6 +3,7 @@ node_modules
 .pnp.*
 yarn.lock
 package-lock.json
+coverage
 
 # Doc HTML upstream (formatage manuel pour la mise en page)
 index.html
