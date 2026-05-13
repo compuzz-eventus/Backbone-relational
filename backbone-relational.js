@@ -1956,15 +1956,14 @@
 					var subModelType = type._subModels[subModelTypeAttribute];
 					if (subModelType) {
 						return subModelType;
-					} 
-						// Recurse into subModelTypes to find a match
-						for (subModelTypeAttribute in type._subModels) {
-							subModelType = this._findSubModelType(type._subModels[subModelTypeAttribute], attributes);
-							if (subModelType) {
-								return subModelType;
-							}
+					}
+					// Recurse into subModelTypes to find a match
+					for (subModelTypeAttribute in type._subModels) {
+						subModelType = this._findSubModelType(type._subModels[subModelTypeAttribute], attributes);
+						if (subModelType) {
+							return subModelType;
 						}
-					
+					}
 				}
 				return null;
 			},

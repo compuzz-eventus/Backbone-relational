@@ -195,7 +195,12 @@ export default [
 			// `var` hoisting et réutilisation hors bloc — pattern ES5 voulu.
 			'block-scoped-var': 'off',
 			// `undefined` utilisé explicitement comme sentinel.
-			'no-undefined': 'off'
+			'no-undefined': 'off',
+			// Cosmétique : on l'a laissé en warning historiquement, mais
+			// `eslint --fix` (lint-staged) le ré-écrit mal et casse l'indent
+			// que Prettier vient d'appliquer. On désactive pour stopper
+			// l'auto-fix destructeur sur ce fichier legacy.
+			'no-else-return': 'off'
 		}
 	},
 
