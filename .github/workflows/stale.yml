@@ -1,0 +1,49 @@
+name: stale
+
+# Trigger automatique désactivé tant que le billing GitHub Actions n'est pas
+# activé. Une fois actif, restaurer `schedule: - cron: '0 5 * * *'` pour un
+# passage quotidien à 05:00 UTC.
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark stale issues and PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issues : marquer stale après 90j d'inactivité, fermer 21j plus tard.
+          days-before-issue-stale: 90
+          days-before-issue-close: 21
+          stale-issue-label: 'stale'
+          stale-issue-message: |
+            This issue has been inactive for 90 days. It will be closed in 21
+            days if there's no further activity. Add a comment, more details,
+            or a reproduction to keep it open.
+          close-issue-message: |
+            Closing due to inactivity. Reopen with new information if you
+            still hit this.
+          exempt-issue-labels: 'pinned,security,bug,enhancement'
+          # PRs : pareil mais cycle plus court — une PR qui dort, on relance vite.
+          days-before-pr-stale: 45
+          days-before-pr-close: 21
+          stale-pr-label: 'stale'
+          stale-pr-message: |
+            This PR has been inactive for 45 days. It will be closed in 21
+            days if there's no update. Rebase / address review or it'll
+            roll off.
+          close-pr-message: |
+            Closing due to inactivity. Reopen or push a rebase when you're
+            ready to resume.
+          exempt-pr-labels: 'pinned,blocked,wip'
+          # Garde-fous opérationnels.
+          operations-per-run: 100
+          ascending: true
+          remove-stale-when-updated: true

@@ -1,0 +1,66 @@
+name: Bug report
+description: Report something that doesn't work as expected in backbone-relational.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the fields below so we can
+        reproduce it quickly.
+
+        **For security vulnerabilities** : do not file a public issue.
+        See [SECURITY.md](../../SECURITY.md) for the private reporting channel.
+
+  - type: input
+    id: version
+    attributes:
+      label: backbone-relational version
+      description: From `package.json` of your project, or `Backbone.Relational.VERSION` if pinned.
+      placeholder: 0.11.0
+    validations:
+      required: true
+
+  - type: input
+    id: backbone-version
+    attributes:
+      label: Backbone version
+      placeholder: 1.7.0
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Runtime
+      description: Node version, browser version, or both.
+      placeholder: Node 22.11 / Chrome 130
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect vs. what did you observe?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: |
+        Smallest code snippet (relations setup + the call that misbehaves)
+        that exhibits the bug. A failing test against `test/*.js` is ideal.
+      render: javascript
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Stack trace / console output
+      description: If applicable.
+      render: shell
+    validations:
+      required: false

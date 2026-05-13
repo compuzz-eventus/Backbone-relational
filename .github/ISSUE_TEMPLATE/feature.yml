@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a new feature or behavior change for backbone-relational.
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: |
+        Describe the use case, not the solution. What's blocking you with
+        the current API ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API or behavior
+      description: |
+        How you'd ideally use this. Pseudo-code welcome.
+      render: javascript
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: |
+        Existing workarounds you've tried, or alternative API shapes you ruled
+        out, and why.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: breaking
+    attributes:
+      label: Compatibility
+      options:
+        - label: This change would be backward-compatible (no `feat!` / breaking change).
+          required: false
