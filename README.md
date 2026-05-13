@@ -12,20 +12,24 @@ This repository contains the Backbone-relational library and its tests. The libr
 
 ## Tech stack
 
-- **Library**: single-file UMD JavaScript (`backbone-relational.js`)
-- **Peer dependency**: [Backbone.js](https://github.com/jashkenas/backbone) (this fork targets [`compuzz-eventus/backbone`](https://github.com/compuzz-eventus/backbone) ≥ 1.6.3)
+- **Library**: single-file UMD JavaScript (`backbone-relational.js`), ES2022
+- **Peer dependency**: [Backbone.js](https://github.com/jashkenas/backbone) (this fork targets [`compuzz-eventus/backbone`](https://github.com/compuzz-eventus/backbone) ≥ 1.7.0)
 - **Utility**: Underscore (default), Lodash 4 also supported via the internal compat layer
-- **Test runner**: [Vitest](https://vitest.dev/) 4 with the `happy-dom` environment
-- **Test API**: legacy QUnit 1.x tests run unchanged via a thin shim (`test/setup/qunit-shim.js`) that dispatches to Vitest's `it`/`expect`
-- **Lint & format**: ESLint 10 (flat config) + Prettier 3
+- **Test runner**: [Vitest](https://vitest.dev/) 4 with the `happy-dom` environment (139 tests, native `describe`/`it`/`expect`)
+- **Browser smoke tests**: [Playwright](https://playwright.dev) — chromium / firefox / webkit smoke specs in `test-browser/`
+- **Benchmarks**: Vitest's `bench()` API in `bench/`
+- **API docs**: [JSDoc](https://jsdoc.app/) generates an HTML site to `docs-api/`
+- **Lint & format**: ESLint 10 (flat config) + Prettier 3 + actionlint on workflows
 - **Package manager**: Yarn 4 via [Corepack](https://nodejs.org/api/corepack.html)
 - **CI**: GitHub Actions (Node 22 + 24)
+- **Release automation**: [release-please](https://github.com/googleapis/release-please) — reads conventional commits and maintains a release PR with bumped version + CHANGELOG
+- **Dependency updates**: [Renovate](https://docs.renovatebot.com/) — weekly grouped PRs
 
 ## Requirements
 
 - **Node.js 22 or 24** (the CI matrix). Other recent LTS versions likely work but are not tested.
 - **Corepack** (shipped with Node ≥ 16) — used to pin Yarn 4. Run `corepack enable` once per machine.
-- **No browser is needed** to run the test suite locally; happy-dom provides the DOM in Node.
+- **Browsers are optional**: the Vitest suite uses happy-dom in Node and needs nothing else. The `yarn test:browser` Playwright smoke tests need browser binaries — `yarn playwright install chromium` (or `--with-deps` on Linux) the first time.
 
 ## Installation
 
@@ -98,44 +102,65 @@ assignment to `Backbone.Relational` for legacy code that reaches for the global.
 
 Defined in `package.json`:
 
-| Script              | Description                                                |
-| ------------------- | ---------------------------------------------------------- |
-| `yarn test`         | Run the full Vitest suite once (happy-dom).                |
-| `yarn test:watch`   | Run Vitest in watch mode for local development.            |
-| `yarn lint`         | Run ESLint on the whole repo.                              |
-| `yarn lint:fix`     | Run ESLint with `--fix` to auto-correct what can be fixed. |
-| `yarn format`       | Format every file via Prettier.                            |
-| `yarn format:check` | Check that every file matches Prettier without writing.    |
+| Script               | Description                                                             |
+| -------------------- | ----------------------------------------------------------------------- |
+| `yarn test`          | Run the full Vitest suite once (happy-dom). ~1.5 s, 139 tests.          |
+| `yarn test:watch`    | Run Vitest in watch mode for local development.                         |
+| `yarn test:coverage` | Run Vitest with V8 coverage. Thresholds enforced in `vitest.config.js`. |
+| `yarn test:browser`  | Run the Playwright smoke specs in real browsers.                        |
+| `yarn bench`         | Run the Vitest benchmark suite once (`bench/`).                         |
+| `yarn docs:api`      | Generate the HTML API docs into `docs-api/` via JSDoc.                  |
+| `yarn lint`          | Run ESLint on the whole repo.                                           |
+| `yarn lint:fix`      | Run ESLint with `--fix` to auto-correct what can be fixed.              |
+| `yarn format`        | Format every file via Prettier.                                         |
+| `yarn format:check`  | Check that every file matches Prettier without writing.                 |
 
 ## Running tests
 
 ```bash
-yarn test            # single run, ~1.5s
-yarn test:watch      # watch mode, re-runs on file changes
+yarn test                                # Vitest suite, ~1.5 s
+yarn test:watch                          # watch mode
+yarn test:coverage                       # with V8 coverage gate
+yarn test:browser                        # Playwright smoke tests (real browsers)
+yarn playwright install chromium         # one-time: install Playwright's chromium
 ```
 
-Test files live in `test/*.js` with shared fixtures and helpers under `test/setup/`. The Vitest configuration is in `vitest.config.js`; the QUnit-to-Vitest adapter lives in `test/setup/qunit-shim.js`.
+Test files live in `test/*.js` with shared fixtures and helpers under `test/setup/`. All tests use the native Vitest API (`describe`/`it`/`expect`). The Vitest configuration is in `vitest.config.js`.
+
+Browser smoke tests live in `test-browser/` and exercise the UMD distribution path in a real engine (chromium, firefox, webkit). They're not a replacement for the Vitest suite — they only check that script-tag loading still exposes a usable `Backbone.Relational`.
 
 ## Project structure
 
 ```
 .
-├─ backbone-relational.js       # Library source (single-file UMD)
-├─ test/                        # QUnit tests + setup helpers
+├─ backbone-relational.js       # Library source (single-file UMD, ES2022)
+├─ backbone-relational.mjs      # ESM wrapper (re-exports from the UMD)
+├─ test/                        # Vitest test suite
 │  ├─ setup/
 │  │  ├─ environment.js         # Boots Backbone/_/$ and the AJAX mock
 │  │  ├─ objects.js             # Fixture models (Zoo, Animal, …)
-│  │  ├─ data.js                # Fixture instances (person1, ourHouse, …)
-│  │  └─ qunit-shim.js          # QUnit 1.x → Vitest adapter
-│  └─ *.js                      # The 16 test files (140 tests total)
-├─ vitest.config.js             # Vitest configuration (happy-dom, setupFiles)
-├─ eslint.config.mjs            # ESLint flat config (v9+)
+│  │  └─ data.js                # Fixture instances (person1, ourHouse, …)
+│  └─ *.js                      # 11 test files, 139 tests, native Vitest API
+├─ test-browser/                # Playwright smoke tests
+│  ├─ index.html                # Page that script-tag-loads the lib
+│  └─ smoke.spec.js             # API surface + HasMany + store dedup specs
+├─ bench/relations.bench.js     # Vitest bench() suite
+├─ vitest.config.js             # Vitest configuration (happy-dom + bench + coverage)
+├─ playwright.config.js         # Playwright configuration
+├─ .jsdoc.json                  # JSDoc config for `yarn docs:api`
+├─ eslint.config.mjs            # ESLint flat config (v10)
 ├─ .prettierrc.json             # Prettier configuration
-├─ .github/workflows/test.yml   # CI: lint job + test matrix (Node 22, 24)
+├─ .github/workflows/           # CI workflows (test, browser, bench, docs,
+│                               #   release-please, stale, all workflow_dispatch
+│                               #   only until billing is enabled)
+├─ .github/renovate.json        # Renovate dependency-update config
+├─ .github/release-please-*.json # release-please config + manifest
+├─ codecov.yml                  # Codecov project + patch coverage gates
 ├─ index.html                   # Demo/landing page (repo site)
-├─ docs/                        # Architecture docs
-├─ static/                      # Site assets
-├─ CHANGELOG.md                 # Release notes (Keep a Changelog)
+├─ docs/                        # Usage + architecture + migration docs
+├─ static/                      # Landing-page assets
+├─ CHANGELOG.md                 # Release notes (maintained by release-please)
+├─ SECURITY.md                  # Vulnerability disclosure policy
 ├─ package.json                 # npm package metadata + scripts
 ├─ yarn.lock                    # Lockfile (Yarn 4)
 ├─ LICENSE.txt                  # MIT license
@@ -144,7 +169,12 @@ Test files live in `test/*.js` with shared fixtures and helpers under `test/setu
 
 ## Browser support
 
-The library itself is plain ES5 UMD and runs in any browser supported by your Backbone version. The test suite no longer requires a browser — it runs in Node with happy-dom — so "browser support" refers only to runtime targets, not the test toolchain.
+The library is ES2022 UMD : it uses `const`/`let`, arrow functions, template literals, optional chaining, and spread, which all major browsers have supported for years. Runtime target is anything that runs your Backbone version.
+
+Testing happens at two levels :
+
+- **Logic** : Vitest with happy-dom (Node) — fast, covers every relation, event, and edge case (`yarn test`, 139 tests).
+- **Distribution path** : Playwright smoke tests in real chromium / firefox / webkit (`yarn test:browser`) — checks that `<script src=…>` loading works end-to-end.
 
 ## Versioning and releases
 

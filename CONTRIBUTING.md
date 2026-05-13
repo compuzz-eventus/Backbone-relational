@@ -43,12 +43,17 @@ You don't need a browser locally — the test suite uses [happy-dom](https://git
 ## Running tests
 
 ```bash
-yarn test            # single run, ~1.5s
-yarn test:watch      # watch mode for local development
-yarn test:coverage   # coverage report (V8 provider)
+yarn test                # single run, ~1.5 s, 139 tests
+yarn test:watch          # watch mode for local development
+yarn test:coverage       # coverage report (V8 provider), enforces thresholds
+yarn test:browser        # Playwright smoke tests in real browsers
+yarn bench               # Vitest benchmark suite (bench/)
+yarn docs:api            # Generate the HTML API docs (docs-api/)
 ```
 
-Test files live in `test/*.js`. Shared fixtures and the QUnit-to-Vitest adapter live in `test/setup/`. The 140 existing tests are written against QUnit 1.x and run unchanged via [`test/setup/qunit-shim.js`](./test/setup/qunit-shim.js). New tests can use either the QUnit-style API (`QUnit.module` / `QUnit.test`) or the native Vitest API (`describe` / `it`) — both work, but stay consistent within a given file.
+All tests use the native Vitest API (`describe` / `it` / `expect`). Test files live in `test/*.js`, shared fixtures under `test/setup/`. Browser smoke tests are in `test-browser/` — first time you run them locally, `yarn playwright install` to fetch chromium / firefox / webkit binaries.
+
+When you add a test for a bug fix or new behavior, add it to the file whose existing tests it logically belongs to. Migration plan and the assertion-mapping table are documented in [`docs/TESTING_MIGRATION.md`](./docs/TESTING_MIGRATION.md).
 
 ## Lint and format
 
@@ -78,10 +83,13 @@ See the [README](./README.md#project-structure) for a tree view of the repo.
 
 ## Release process
 
-Releases follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html). For each release:
+Releases are automated by [release-please](https://github.com/googleapis/release-please) — see [`.github/workflows/release-please.yml`](./.github/workflows/release-please.yml) and [`.github/release-please-config.json`](./.github/release-please-config.json).
 
-1. Bump `version` in `package.json`, the header of `backbone-relational.js`, and the two version mentions in `index.html`.
-2. Add a `## [X.Y.Z] — YYYY-MM-DD` section at the top of `CHANGELOG.md` (Keep a Changelog format) with `### Added` / `### Changed` / `### Fixed` / `### Removed` subsections as needed.
-3. Tag the commit (`git tag X.Y.Z`) and push (`git push --tags`).
+What that means in practice :
 
-The convention in this fork's history is to split the bump and the changelog entry into two commits: `chore(release): X.Y.Z` followed by `docs(release): move X.Y.Z release notes into CHANGELOG.md`.
+- Every push to `master` (once the workflow's auto trigger is restored — currently `workflow_dispatch` only) updates an open "release PR" that maintains `CHANGELOG.md` and bumps the `version` in `package.json`.
+- Merging the release PR creates the git tag and a GitHub release.
+- **Use [conventional commits](https://www.conventionalcommits.org/)** in your PR titles / squash messages : `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`. Breaking changes are signalled by `feat!:` or `BREAKING CHANGE:` in the body.
+- Visible changelog sections are `feat` (Features), `fix` (Bug Fixes), `perf` (Performance), `revert` (Reverts), `docs` (Documentation), `refactor` (Refactor). The rest are hidden but still tracked.
+
+Don't bump `version` or edit `CHANGELOG.md` by hand for routine releases — release-please will fight you. The header version inside `backbone-relational.js` and the two mentions in `index.html` can lag until a manual sync ; that's an open follow-up if it bothers anyone.

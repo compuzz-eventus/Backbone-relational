@@ -6,7 +6,9 @@ Document de référence sur le comportement **interne** du plugin (event queue, 
 
 ## 1. Layout du fichier
 
-Tout vit dans `backbone-relational.js` (~2100 lignes), exposé via IIFE qui supporte AMD, CommonJS, et global. Le paramètre de l'IIFE s'appelle `module` (l'objet exporté), à ne pas confondre avec le `module` Node.
+Tout vit dans `backbone-relational.js` (~2700 lignes après la modernisation ES2022 et les annotations JSDoc), exposé via IIFE qui supporte AMD, CommonJS, et global. Le paramètre de l'IIFE s'appelle `module` (l'objet exporté), à ne pas confondre avec le `module` Node.
+
+Un wrapper `backbone-relational.mjs` au même niveau réexporte le UMD pour les consommateurs `import` modernes (cf. README §"ESM usage").
 
 ```
 module.Semaphore      — mixin compteur (acquire/release/isLocked)
