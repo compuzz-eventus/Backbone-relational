@@ -1,6 +1,6 @@
 /* vim: set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab: */
 /**
- * Backbone-relational.js 0.10.9
+ * Backbone-relational.js 0.11.0
  * (c) 2011-present Paul Uithol and contributors (https://github.com/PaulUithol/Backbone-relational/graphs/contributors)
  *
  * Backbone-relational may be freely distributed under the MIT license; see the accompanying LICENSE.txt.
@@ -1956,7 +1956,7 @@
 					var subModelType = type._subModels[subModelTypeAttribute];
 					if (subModelType) {
 						return subModelType;
-					} else {
+					} 
 						// Recurse into subModelTypes to find a match
 						for (subModelTypeAttribute in type._subModels) {
 							subModelType = this._findSubModelType(type._subModels[subModelTypeAttribute], attributes);
@@ -1964,7 +1964,7 @@
 								return subModelType;
 							}
 						}
-					}
+					
 				}
 				return null;
 			},
