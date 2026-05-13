@@ -1,0 +1,67 @@
+name: bench
+
+on:
+  schedule:
+    # Nightly at 03:00 UTC — outside business hours, no concurrency with PR checks
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'backbone-relational.js'
+      - 'bench/**'
+      - '.github/workflows/bench.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  benchmark:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run benchmarks (JSON output)
+        run: yarn bench --outputJson bench-results.json
+
+      - name: Print benchmark summary
+        if: always()
+        run: |
+          if [ -f bench-results.json ]; then
+            node -e "
+              const r = require('./bench-results.json');
+              const files = r.files || [];
+              for (const f of files) {
+                for (const g of (f.groups || [])) {
+                  console.log('## ' + (g.fullName || g.name));
+                  for (const b of (g.benchmarks || [])) {
+                    const hz = b.result?.hz?.toFixed(2) ?? 'n/a';
+                    const mean = b.result?.mean?.toFixed(3) ?? 'n/a';
+                    console.log('  ' + b.name + '  →  ' + hz + ' hz  (mean ' + mean + ' ms)');
+                  }
+                }
+              }
+            "
+          fi
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-results.json
+          retention-days: 30

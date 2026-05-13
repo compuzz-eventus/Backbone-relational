@@ -1,6 +1,15 @@
 {
   "name": "backbone-relational",
   "main": "backbone-relational.js",
+  "module": "backbone-relational.mjs",
+  "exports": {
+    ".": {
+      "import": "./backbone-relational.mjs",
+      "require": "./backbone-relational.js",
+      "default": "./backbone-relational.js"
+    },
+    "./package.json": "./package.json"
+  },
   "description": "Get and set relations (one-to-one, one-to-many, many-to-one) for Backbone models",
   "homepage": "http://backbonerelational.org",
   "keywords": [
@@ -17,6 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench --run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

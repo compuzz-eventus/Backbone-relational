@@ -223,6 +223,23 @@ export default [
 		}
 	},
 
+	// ESM : wrapper de la lib + benchmarks Vitest natif.
+	{
+		files: ['**/*.mjs', 'bench/**/*.js'],
+		languageOptions: {
+			sourceType: 'module'
+		}
+	},
+
+	// Tests migrés vers l'API Vitest native (cf. docs/TESTING_MIGRATION.md).
+	// Étendre cette liste fichier par fichier au fur et à mesure de la migration.
+	{
+		files: ['test/semaphore.js'],
+		languageOptions: {
+			sourceType: 'module'
+		}
+	},
+
 	// Doit rester dernier : désactive toute règle qui entrerait en conflit avec Prettier.
 	prettier
 ];

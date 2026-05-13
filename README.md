@@ -79,7 +79,20 @@ Note: If you manually call `toJSON` across multiple objects and want bounded dee
 ## Entry points
 
 - Browser/global build: `backbone-relational.js` (UMD/vanilla script)
-- `package.json` `main`: `backbone-relational.js`
+- `package.json` `main` (CommonJS): `backbone-relational.js`
+- `package.json` `module` / `exports.import` (ESM): `backbone-relational.mjs`
+
+### ESM usage
+
+```js
+import Relational, { Model, Collection, HasOne, HasMany, store } from 'backbone-relational';
+
+const Author = Model.extend({ urlRoot: '/authors/' });
+```
+
+The `.mjs` is a thin facade over the same UMD source — it imports the CommonJS
+module and re-exports it via named + default exports. It also mirrors the
+assignment to `Backbone.Relational` for legacy code that reaches for the global.
 
 ## Scripts
 
