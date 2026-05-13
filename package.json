@@ -18,6 +18,13 @@
     "nested",
     "model"
   ],
+  "files": [
+    "backbone-relational.js",
+    "backbone-relational.mjs",
+    "LICENSE.txt",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/compuzz-eventus/Backbone-relational.git"

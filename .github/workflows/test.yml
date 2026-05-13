@@ -1,9 +1,10 @@
 name: tests
 
+# Triggers automatiques désactivés tant que le billing GitHub Actions n'est
+# pas activé sur le repo. Pour relancer en local : `yarn lint && yarn test &&
+# yarn test:coverage`. Pour relancer ici : onglet Actions → Run workflow.
 on:
-  push:
-    branches: [master]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,6 +35,11 @@ jobs:
 
       - name: ESLint
         run: yarn lint
+
+      - name: actionlint (validate workflows)
+        uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -color
 
   test:
     name: Node ${{ matrix.node-version }}

@@ -1,15 +1,10 @@
 name: bench
 
+# Triggers automatiques (nightly + PR) désactivés tant que le billing
+# GitHub Actions n'est pas activé. Pour lancer manuellement : onglet
+# Actions → Run workflow. Pour mesurer en local : `yarn bench`.
 on:
-  schedule:
-    # Nightly at 03:00 UTC — outside business hours, no concurrency with PR checks
-    - cron: '0 3 * * *'
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'backbone-relational.js'
-      - 'bench/**'
-      - '.github/workflows/bench.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
