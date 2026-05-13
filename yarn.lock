@@ -511,7 +511,7 @@ __metadata:
   resolution: "backbone-relational@workspace:."
   dependencies:
     "@eslint/js": "npm:^10.0.1"
-    backbone: "github:compuzz-eventus/backbone#1.6.3"
+    backbone: "github:compuzz-eventus/backbone#26271ba9d892d625e70dbb265fa2d9ff11256011"
     eslint: "npm:10"
     eslint-config-prettier: "npm:^10.1.8"
     globals: "npm:^17.6.0"
@@ -522,16 +522,19 @@ __metadata:
     underscore: "npm:^1.13.8"
     vitest: "npm:^4.1.6"
   peerDependencies:
-    backbone: "*"
+    backbone: ">=1.7.0"
   languageName: unknown
   linkType: soft
 
-"backbone@github:compuzz-eventus/backbone#1.6.3":
-  version: 1.6.3
-  resolution: "backbone@https://github.com/compuzz-eventus/backbone.git#commit=cbd2891a7a30e7ba9b275137a0f7e1dbd4e76ff1"
+"backbone@github:compuzz-eventus/backbone#26271ba9d892d625e70dbb265fa2d9ff11256011":
+  version: 1.7.0
+  resolution: "backbone@https://github.com/compuzz-eventus/backbone.git#commit=26271ba9d892d625e70dbb265fa2d9ff11256011"
   dependencies:
     underscore: "npm:^1.8.3"
-  checksum: 10c0/328055ae5869cce15ca8b2056fee6e236fa5489921783120d948556a02db29161d6bf491223d6a1aaa66136ec7dd3060b7c0de9a6d7d608efb1efa47caccd3d1
+  dependenciesMeta:
+    puppeteer:
+      built: true
+  checksum: 10c0/becf3c29b40ab113364133cb01b83fad70b90cd35c4f0c9080c73137d8042bc6c811844b5edc399913a23dfc2a0a30aae6f78387b0fb27e9c44f332ddf7c9e64
   languageName: node
   linkType: hard
 
