@@ -1,0 +1,54 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "timezone": "Europe/Brussels",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Group all dev tooling (lint/format/test) into one PR per week",
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/**",
+        "eslint-config-prettier",
+        "globals",
+        "prettier",
+        "husky",
+        "lint-staged",
+        "vitest",
+        "@vitest/**",
+        "happy-dom"
+      ],
+      "groupName": "dev tooling",
+      "automerge": false
+    },
+    {
+      "description": "Group test peer-runtime libs",
+      "matchPackageNames": ["underscore", "jquery"],
+      "groupName": "test runtime libs"
+    },
+    {
+      "description": "Backbone fork is pinned to a github commit — bump manually",
+      "matchPackageNames": ["backbone"],
+      "enabled": false
+    },
+    {
+      "description": "Auto-merge GitHub Actions and patch-level dev deps",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": false
+  }
+}

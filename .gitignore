@@ -4,6 +4,9 @@ coverage
 
 .DS_Store
 
+# Local AI/tooling state (Claude Code config, etc.)
+.claude/
+
 # Yarn 4 (mode node-modules : on ignore le cache et l'état d'install)
 .yarn/*
 !.yarn/patches
