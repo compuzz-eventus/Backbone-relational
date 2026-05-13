@@ -1,0 +1,37 @@
+# Codecov configuration — https://docs.codecov.com/docs/codecovyml-reference
+#
+# Le seuil de blocage (project) suit le baseline ~92% (lignes) avec une
+# tolérance de 2 points avant de signaler la PR. Le seuil patch (couverture
+# des lignes ajoutées par la PR) est plus strict pour pousser à couvrir le
+# nouveau code.
+
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 2%
+        if_ci_failed: error
+    patch:
+      default:
+        target: 85%
+        threshold: 5%
+        if_ci_failed: error
+
+  precision: 2
+  round: down
+
+comment:
+  layout: 'reach, diff, flags, files'
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - 'test/**'
+  - 'bench/**'
+  - 'docs/**'
+  - 'static/**'
+  - '*.config.js'
+  - '*.config.mjs'

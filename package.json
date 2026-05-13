@@ -38,6 +38,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "docs:api": "jsdoc -c .jsdoc.json",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -69,6 +70,7 @@
     "happy-dom": "^20.9.0",
     "husky": "^9.1.7",
     "jquery": "^4.0.0",
+    "jsdoc": "^4.0.5",
     "lint-staged": "^17.0.4",
     "prettier": "3",
     "semver": "^7.6.3",

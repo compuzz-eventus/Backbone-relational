@@ -1,0 +1,71 @@
+name: docs
+
+# Trigger automatique désactivé tant que le billing GitHub Actions n'est pas
+# activé. Pour générer en local : `yarn docs:api` (sortie : docs-api/).
+# Pour publier manuellement : onglet Actions → Run workflow. Pages doit être
+# activé côté Settings (Source: GitHub Actions).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build API docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Generate JSDoc
+        run: yarn docs:api
+
+      - name: Resolve generated docs directory
+        id: docs
+        run: |
+          pkg_name=$(node -p "require('./package.json').name")
+          pkg_version=$(node -p "require('./package.json').version")
+          dir="docs-api/${pkg_name}/${pkg_version}"
+          if [ ! -d "$dir" ]; then
+            echo "Expected docs directory not found: $dir" >&2
+            exit 1
+          fi
+          echo "dir=$dir" >>"$GITHUB_OUTPUT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.docs.outputs.dir }}
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

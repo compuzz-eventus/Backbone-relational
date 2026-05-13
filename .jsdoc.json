@@ -1,0 +1,22 @@
+{
+  "source": {
+    "include": ["backbone-relational.js"],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "plugins": ["plugins/markdown"],
+  "opts": {
+    "destination": "./docs-api/",
+    "recurse": false,
+    "readme": "./README.md",
+    "package": "./package.json"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false,
+    "default": {
+      "includeDate": false,
+      "useLongnameInNav": true
+    }
+  }
+}
