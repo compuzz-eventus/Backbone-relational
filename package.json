@@ -15,7 +15,11 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
@@ -25,9 +29,14 @@
   "license": "MIT",
   "version": "0.10.9",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
+    "eslint": "10",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
     "happy-dom": "^20.9.0",
     "jquery": "^4.0.0",
+    "prettier": "3",
     "semver": "^7.6.3",
     "underscore": "^1.13.8",
     "vitest": "^4.1.6"

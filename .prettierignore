@@ -1,0 +1,16 @@
+node_modules
+.yarn
+.pnp.*
+yarn.lock
+package-lock.json
+
+# Doc HTML upstream (formatage manuel pour la mise en page)
+index.html
+docs
+
+# CHANGELOG : format manuel (Keep a Changelog) avec wrapping personnalisé
+CHANGELOG.md
+
+# Fichiers tiers conservés tel quels
+bower_components
+static

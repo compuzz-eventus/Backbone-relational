@@ -1,0 +1,15 @@
+# Normaliser les line endings à LF côté dépôt.
+# Évite les flip-flop CRLF/LF entre Windows local et Linux CI, et garantit
+# que Prettier (endOfLine: 'lf') ne réécrit pas les fichiers à chaque pull.
+* text=auto eol=lf
+
+# Binaires : pas de conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
