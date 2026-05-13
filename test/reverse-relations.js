@@ -1,327 +1,300 @@
-QUnit.module('Reverse relations', { setup: require('./setup/data') });
+import { describe, it, beforeEach, expect } from 'vitest';
+import initObjects from './setup/data.js';
 
-QUnit.test('Add and remove', function () {
-	equal(ourHouse.get('occupants').length, 1, 'ourHouse has 1 occupant');
-	equal(person1.get('livesIn'), null, "Person 1 doesn't live anywhere");
+describe('Reverse relations', () => {
+	beforeEach(initObjects);
 
-	ourHouse.get('occupants').add(person1);
+	it('Add and remove', () => {
+		expect(ourHouse.get('occupants').length).toBe(1);
+		expect(person1.get('livesIn')).toBe(null);
 
-	equal(ourHouse.get('occupants').length, 2, 'Our House has 2 occupants');
-	equal(person1.get('livesIn') && person1.get('livesIn').id, ourHouse.id, 'Person 1 lives in ourHouse');
+		ourHouse.get('occupants').add(person1);
 
-	person1.set({ livesIn: theirHouse });
+		expect(ourHouse.get('occupants').length).toBe(2);
+		expect(person1.get('livesIn') && person1.get('livesIn').id).toBe(ourHouse.id);
 
-	equal(theirHouse.get('occupants').length, 1, 'theirHouse has 1 occupant');
-	equal(ourHouse.get('occupants').length, 1, 'ourHouse has 1 occupant');
-	equal(person1.get('livesIn') && person1.get('livesIn').id, theirHouse.id, 'Person 1 lives in theirHouse');
-});
+		person1.set({ livesIn: theirHouse });
 
-QUnit.test('Destroy removes models from reverse relations', function () {
-	var zoo = new Zoo({ id: 1, animals: [2, 3, 4] });
-
-	var rhino = new Animal({ id: 2, species: 'rhino' });
-	var baboon = new Animal({ id: 3, species: 'baboon' });
-	var hippo = new Animal({ id: 4, species: 'hippo' });
-
-	ok(zoo.get('animals').length === 3);
-
-	rhino.destroy();
-
-	ok(zoo.get('animals').length === 2);
-	ok(zoo.get('animals').get(baboon) === baboon);
-	ok(!rhino.get('zoo'));
-
-	zoo.get('animals').remove(hippo);
-
-	ok(zoo.get('animals').length === 1);
-	ok(!hippo.get('zoo'));
-
-	zoo.destroy();
-
-	ok(zoo.get('animals').length === 0);
-	ok(!baboon.get('zoo'));
-});
-
-QUnit.test('HasOne relations to self (tree stucture)', function () {
-	var child1 = new Node({ id: '2', parent: '1', name: 'First child' });
-	var parent = new Node({ id: '1', name: 'Parent' });
-	var child2 = new Node({ id: '3', parent: '1', name: 'Second child' });
-
-	equal(parent.get('children').length, 2);
-	ok(parent.get('children').include(child1));
-	ok(parent.get('children').include(child2));
-
-	ok(child1.get('parent') === parent);
-	equal(child1.get('children').length, 0);
-
-	ok(child2.get('parent') === parent);
-	equal(child2.get('children').length, 0);
-});
-
-QUnit.test('Models referencing each other in the same relation', function () {
-	var parent = new Node({ id: 1 });
-	var child = new Node({ id: 2 });
-
-	child.set('parent', parent);
-	parent.save({ parent: child });
-
-	ok(parent.get('parent') === child);
-	ok(child.get('parent') === parent);
-});
-
-QUnit.test('HasMany relations to self (tree structure)', function () {
-	var child1 = new Node({ id: '2', name: 'First child' });
-	var parent = new Node({ id: '1', children: ['2', '3'], name: 'Parent' });
-	var child2 = new Node({ id: '3', name: 'Second child' });
-
-	equal(parent.get('children').length, 2);
-	ok(parent.get('children').include(child1));
-	ok(parent.get('children').include(child2));
-
-	ok(child1.get('parent') === parent);
-	equal(child1.get('children').length, 0);
-
-	ok(child2.get('parent') === parent);
-	equal(child2.get('children').length, 0);
-});
-
-QUnit.test('HasOne relations to self (cycle, directed graph structure)', function () {
-	var node1 = new Node({ id: '1', parent: '3', name: 'First node' });
-	var node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
-	var node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
-
-	ok(node1.get('parent') === node3);
-	equal(node1.get('children').length, 1);
-	ok(node1.get('children').at(0) === node2);
-
-	ok(node2.get('parent') === node1);
-	equal(node2.get('children').length, 1);
-	ok(node2.get('children').at(0) === node3);
-
-	ok(node3.get('parent') === node2);
-	equal(node3.get('children').length, 1);
-	ok(node3.get('children').at(0) === node1);
-});
-
-QUnit.test("New objects (no 'id' yet) have working relations", function () {
-	var person = new Person({
-		name: 'Remi'
+		expect(theirHouse.get('occupants').length).toBe(1);
+		expect(ourHouse.get('occupants').length).toBe(1);
+		expect(person1.get('livesIn') && person1.get('livesIn').id).toBe(theirHouse.id);
 	});
 
-	person.set({ user: { login: '1', email: '1' } });
-	var user1 = person.get('user');
+	it('Destroy removes models from reverse relations', () => {
+		const zoo = new Zoo({ id: 1, animals: [2, 3, 4] });
 
-	ok(user1 instanceof User, 'User created on Person');
-	equal(user1.get('login'), '1', 'person.user is the correct User');
+		const rhino = new Animal({ id: 2, species: 'rhino' });
+		const baboon = new Animal({ id: 3, species: 'baboon' });
+		const hippo = new Animal({ id: 4, species: 'hippo' });
 
-	var user2 = new User({
-		login: '2',
-		email: '2'
+		expect(zoo.get('animals').length).toBe(3);
+
+		rhino.destroy();
+
+		expect(zoo.get('animals').length).toBe(2);
+		expect(zoo.get('animals').get(baboon)).toBe(baboon);
+		expect(rhino.get('zoo')).toBeFalsy();
+
+		zoo.get('animals').remove(hippo);
+
+		expect(zoo.get('animals').length).toBe(1);
+		expect(hippo.get('zoo')).toBeFalsy();
+
+		zoo.destroy();
+
+		expect(zoo.get('animals').length).toBe(0);
+		expect(baboon.get('zoo')).toBeFalsy();
 	});
 
-	ok(user2.get('person') === null, "'user' doesn't belong to a 'person' yet");
+	it('HasOne relations to self (tree stucture)', () => {
+		const child1 = new Node({ id: '2', parent: '1', name: 'First child' });
+		const parent = new Node({ id: '1', name: 'Parent' });
+		const child2 = new Node({ id: '3', parent: '1', name: 'Second child' });
 
-	person.set({ user: user2 });
+		expect(parent.get('children').length).toBe(2);
+		expect(parent.get('children').include(child1)).toBe(true);
+		expect(parent.get('children').include(child2)).toBe(true);
 
-	ok(user1.get('person') === null);
-	ok(person.get('user') === user2);
-	ok(user2.get('person') === person);
+		expect(child1.get('parent')).toBe(parent);
+		expect(child1.get('children').length).toBe(0);
 
-	person2.set({ user: user2 });
+		expect(child2.get('parent')).toBe(parent);
+		expect(child2.get('children').length).toBe(0);
+	});
 
-	ok(person.get('user') === null);
-	ok(person2.get('user') === user2);
-	ok(user2.get('person') === person2);
-});
+	it('Models referencing each other in the same relation', () => {
+		const parent = new Node({ id: 1 });
+		const child = new Node({ id: 2 });
 
-QUnit.test("'Save' objects (performing 'set' multiple times without and with id)", 4, function () {
-	person3
-		.on('add:jobs', function (model, coll) {
-			console.log('got here 1');
-			var company = model.get('company');
-			ok(
-				company instanceof Company &&
-					company.get('ceo').get('name') === 'Lunar boy' &&
-					model.get('person') === person3,
-				'add:jobs: Both Person and Company are set on the Job instance once the event gets fired'
-			);
-		})
-		.on('remove:jobs', function (model, coll) {
-			console.log('got here 2');
-			ok(false, "remove:jobs: 'person3' should not lose his job");
+		child.set('parent', parent);
+		parent.save({ parent: child });
+
+		expect(parent.get('parent')).toBe(child);
+		expect(child.get('parent')).toBe(parent);
+	});
+
+	it('HasMany relations to self (tree structure)', () => {
+		const child1 = new Node({ id: '2', name: 'First child' });
+		const parent = new Node({ id: '1', children: ['2', '3'], name: 'Parent' });
+		const child2 = new Node({ id: '3', name: 'Second child' });
+
+		expect(parent.get('children').length).toBe(2);
+		expect(parent.get('children').include(child1)).toBe(true);
+		expect(parent.get('children').include(child2)).toBe(true);
+
+		expect(child1.get('parent')).toBe(parent);
+		expect(child1.get('children').length).toBe(0);
+
+		expect(child2.get('parent')).toBe(parent);
+		expect(child2.get('children').length).toBe(0);
+	});
+
+	it('HasOne relations to self (cycle, directed graph structure)', () => {
+		const node1 = new Node({ id: '1', parent: '3', name: 'First node' });
+		const node2 = new Node({ id: '2', parent: '1', name: 'Second node' });
+		const node3 = new Node({ id: '3', parent: '2', name: 'Third node' });
+
+		expect(node1.get('parent')).toBe(node3);
+		expect(node1.get('children').length).toBe(1);
+		expect(node1.get('children').at(0)).toBe(node2);
+
+		expect(node2.get('parent')).toBe(node1);
+		expect(node2.get('children').length).toBe(1);
+		expect(node2.get('children').at(0)).toBe(node3);
+
+		expect(node3.get('parent')).toBe(node2);
+		expect(node3.get('children').length).toBe(1);
+		expect(node3.get('children').at(0)).toBe(node1);
+	});
+
+	it("New objects (no 'id' yet) have working relations", () => {
+		const person = new Person({
+			name: 'Remi'
 		});
 
-	// Create Models from an object. Should trigger `add:jobs` on `person3`
-	var company = new Company({
-		name: 'Luna Corp.',
-		ceo: {
-			name: 'Lunar boy'
-		},
-		employees: [{ person: 'person-3' }]
-	});
+		person.set({ user: { login: '1', email: '1' } });
+		const user1 = person.get('user');
 
-	company
-		.on('add:employees', function (model, coll) {
-			console.log('got here 3');
-			var company = model.get('company');
-			ok(
-				company instanceof Company &&
-					company.get('ceo').get('name') === 'Lunar boy' &&
-					model.get('person') === person3,
-				'add:employees: Both Person and Company are set on the Company instance once the event gets fired'
-			);
-		})
-		.on('remove:employees', function (model, coll) {
-			console.log('got here 4');
-			ok(true, "'remove:employees: person3' should lose a job once");
+		expect(user1).toBeInstanceOf(User);
+		expect(user1.get('login')).toBe('1');
+
+		const user2 = new User({
+			login: '2',
+			email: '2'
 		});
 
-	// Backbone.save executes "model.set(model.parse(resp), options)". Set a full map over object, but now with ids.
-	// Should trigger `remove:employees`, `add:employees`, and `add:jobs`
-	company.set({
-		id: 'company-3',
-		name: 'Big Corp.',
-		ceo: {
-			id: 'person-4',
-			name: 'Lunar boy',
-			resource_uri: 'person-4'
-		},
-		employees: [{ id: 'job-1', person: 'person-3', resource_uri: 'job-1' }],
-		resource_uri: 'company-3'
+		expect(user2.get('person')).toBe(null);
+
+		person.set({ user: user2 });
+
+		expect(user1.get('person')).toBe(null);
+		expect(person.get('user')).toBe(user2);
+		expect(user2.get('person')).toBe(person);
+
+		person2.set({ user: user2 });
+
+		expect(person.get('user')).toBe(null);
+		expect(person2.get('user')).toBe(user2);
+		expect(user2.get('person')).toBe(person2);
 	});
 
-	// This should not trigger additional `add`/`remove` events
-	company.set({
-		employees: ['job-1']
-	});
-});
+	it("'Save' objects (performing 'set' multiple times without and with id)", () => {
+		person3
+			.on('add:jobs', (model) => {
+				const company = model.get('company');
+				expect(
+					company instanceof Company &&
+						company.get('ceo').get('name') === 'Lunar boy' &&
+						model.get('person') === person3
+				).toBe(true);
+			})
+			.on('remove:jobs', () => {
+				throw new Error("remove:jobs: 'person3' should not lose his job");
+			});
 
-QUnit.test("Set the same value a couple of time, by 'id' and object", function () {
-	person1.set({ likesALot: 'person-2' });
-	person1.set({ likesALot: person2 });
+		const company = new Company({
+			name: 'Luna Corp.',
+			ceo: {
+				name: 'Lunar boy'
+			},
+			employees: [{ person: 'person-3' }]
+		});
 
-	ok(person1.get('likesALot') === person2);
-	ok(person2.get('likedALotBy') === person1);
+		company
+			.on('add:employees', (model) => {
+				const co = model.get('company');
+				expect(
+					co instanceof Company &&
+						co.get('ceo').get('name') === 'Lunar boy' &&
+						model.get('person') === person3
+				).toBe(true);
+			})
+			.on('remove:employees', () => {
+				// expected once
+			});
 
-	person1.set({ likesALot: 'person-2' });
+		company.set({
+			id: 'company-3',
+			name: 'Big Corp.',
+			ceo: {
+				id: 'person-4',
+				name: 'Lunar boy',
+				resource_uri: 'person-4'
+			},
+			employees: [{ id: 'job-1', person: 'person-3', resource_uri: 'job-1' }],
+			resource_uri: 'company-3'
+		});
 
-	ok(person1.get('likesALot') === person2);
-	ok(person2.get('likedALotBy') === person1);
-});
-
-QUnit.test('Numerical keys', function () {
-	var child1 = new Node({ id: 2, name: 'First child' });
-	var parent = new Node({ id: 1, children: [2, 3], name: 'Parent' });
-	var child2 = new Node({ id: 3, name: 'Second child' });
-
-	equal(parent.get('children').length, 2);
-	ok(parent.get('children').include(child1));
-	ok(parent.get('children').include(child2));
-
-	ok(child1.get('parent') === parent);
-	equal(child1.get('children').length, 0);
-
-	ok(child2.get('parent') === parent);
-	equal(child2.get('children').length, 0);
-});
-
-QUnit.test('Relations that use refs to other models (instead of keys)', function () {
-	var child1 = new Node({ id: 2, name: 'First child' });
-	var parent = new Node({ id: 1, children: [child1, 3], name: 'Parent' });
-	var child2 = new Node({ id: 3, name: 'Second child' });
-
-	ok(child1.get('parent') === parent);
-	equal(child1.get('children').length, 0);
-
-	equal(parent.get('children').length, 2);
-	ok(parent.get('children').include(child1));
-	ok(parent.get('children').include(child2));
-
-	var child3 = new Node({ id: 4, parent: parent, name: 'Second child' });
-
-	equal(parent.get('children').length, 3);
-	ok(parent.get('children').include(child3));
-
-	ok(child3.get('parent') === parent);
-	equal(child3.get('children').length, 0);
-});
-
-QUnit.test("Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", function () {
-	// This test caused a race condition to surface:
-	// The 'relation's constructor initializes the 'reverseRelation', which called 'relation.addRelated' in it's 'initialize'.
-	// However, 'relation's 'initialize' has not been executed yet, so it doesn't have a 'related' collection yet.
-	var Properties = Backbone.Relational.Model.extend({});
-	var View = Backbone.Relational.Model.extend({
-		relations: [
-			{
-				type: Backbone.Relational.HasMany,
-				key: 'properties',
-				relatedModel: Properties,
-				reverseRelation: {
-					type: Backbone.Relational.HasOne,
-					key: 'view'
-				}
-			}
-		]
+		company.set({
+			employees: ['job-1']
+		});
 	});
 
-	var props = new Properties({ id: 1, key: 'width', value: '300px', view: 1 });
-	var view = new View({
-		id: 1,
-		properties: [{ id: 1, key: 'width', value: '300px', view: 1 }]
+	it("Set the same value a couple of time, by 'id' and object", () => {
+		person1.set({ likesALot: 'person-2' });
+		person1.set({ likesALot: person2 });
+
+		expect(person1.get('likesALot')).toBe(person2);
+		expect(person2.get('likedALotBy')).toBe(person1);
+
+		person1.set({ likesALot: 'person-2' });
+
+		expect(person1.get('likesALot')).toBe(person2);
+		expect(person2.get('likedALotBy')).toBe(person1);
 	});
 
-	ok(props.get('view') === view);
-	ok(view.get('properties').include(props));
-});
+	it('Numerical keys', () => {
+		const child1 = new Node({ id: 2, name: 'First child' });
+		const parent = new Node({ id: 1, children: [2, 3], name: 'Parent' });
+		const child2 = new Node({ id: 3, name: 'Second child' });
 
-QUnit.test('Reverse relations are found for models that have not been instantiated and use .extend()', function () {
-	var View = Backbone.Relational.Model.extend({});
-	var Property = Backbone.Relational.Model.extend({
-		relations: [
-			{
-				type: Backbone.Relational.HasOne,
-				key: 'view',
-				relatedModel: View,
-				reverseRelation: {
+		expect(parent.get('children').length).toBe(2);
+		expect(parent.get('children').include(child1)).toBe(true);
+		expect(parent.get('children').include(child2)).toBe(true);
+
+		expect(child1.get('parent')).toBe(parent);
+		expect(child1.get('children').length).toBe(0);
+
+		expect(child2.get('parent')).toBe(parent);
+		expect(child2.get('children').length).toBe(0);
+	});
+
+	it('Relations that use refs to other models (instead of keys)', () => {
+		const child1 = new Node({ id: 2, name: 'First child' });
+		const parent = new Node({ id: 1, children: [child1, 3], name: 'Parent' });
+		const child2 = new Node({ id: 3, name: 'Second child' });
+
+		expect(child1.get('parent')).toBe(parent);
+		expect(child1.get('children').length).toBe(0);
+
+		expect(parent.get('children').length).toBe(2);
+		expect(parent.get('children').include(child1)).toBe(true);
+		expect(parent.get('children').include(child2)).toBe(true);
+
+		const child3 = new Node({ id: 4, parent: parent, name: 'Second child' });
+
+		expect(parent.get('children').length).toBe(3);
+		expect(parent.get('children').include(child3)).toBe(true);
+
+		expect(child3.get('parent')).toBe(parent);
+		expect(child3.get('children').length).toBe(0);
+	});
+
+	it("Add an already existing model (reverseRelation shouldn't exist yet) to a relation as a hash", () => {
+		const Properties = Backbone.Relational.Model.extend({});
+		const View = Backbone.Relational.Model.extend({
+			relations: [
+				{
 					type: Backbone.Relational.HasMany,
-					key: 'properties'
+					key: 'properties',
+					relatedModel: Properties,
+					reverseRelation: {
+						type: Backbone.Relational.HasOne,
+						key: 'view'
+					}
 				}
-			}
-		]
+			]
+		});
+
+		const props = new Properties({ id: 1, key: 'width', value: '300px', view: 1 });
+		const view = new View({
+			id: 1,
+			properties: [{ id: 1, key: 'width', value: '300px', view: 1 }]
+		});
+
+		expect(props.get('view')).toBe(view);
+		expect(view.get('properties').include(props)).toBe(true);
 	});
 
-	var view = new View({
-		id: 1,
-		properties: [{ id: 1, key: 'width', value: '300px' }]
+	it('Reverse relations are found for models that have not been instantiated and use .extend()', () => {
+		const View = Backbone.Relational.Model.extend({});
+		const Property = Backbone.Relational.Model.extend({
+			relations: [
+				{
+					type: Backbone.Relational.HasOne,
+					key: 'view',
+					relatedModel: View,
+					reverseRelation: {
+						type: Backbone.Relational.HasMany,
+						key: 'properties'
+					}
+				}
+			]
+		});
+		void Property;
+
+		const view = new View({
+			id: 1,
+			properties: [{ id: 1, key: 'width', value: '300px' }]
+		});
+
+		expect(view.get('properties')).toBeInstanceOf(Backbone.Relational.Collection);
 	});
 
-	ok(view.get('properties') instanceof Backbone.Relational.Collection);
-});
-
-QUnit.test('Reverse relations found for models that have not been instantiated and run .setup() manually', function () {
-	// Generated from CoffeeScript code:
-	// 	 class View extends Backbone.Relational.Model
-	//
-	// 	 View.setup()
-	//
-	// 	 class Property extends Backbone.Relational.Model
-	// 	   relations: [
-	// 	     type: Backbone.Relational.HasOne
-	// 	     key: 'view'
-	// 	     relatedModel: View
-	// 	     reverseRelation:
-	// 	       type: Backbone.Relational.HasMany
-	// 	       key: 'properties'
-	// 	   ]
-	//
-	// 	 Property.setup()
-
-	var Property,
-		View,
-		__hasProp = {}.hasOwnProperty,
-		__extends = function (child, parent) {
-			for (var key in parent) {
+	it('Reverse relations found for models that have not been instantiated and run .setup() manually', () => {
+		const __hasProp = {}.hasOwnProperty;
+		const __extends = function (child, parent) {
+			for (const key in parent) {
 				if (__hasProp.call(parent, key)) child[key] = parent[key];
 			}
 			function ctor() {
@@ -333,177 +306,165 @@ QUnit.test('Reverse relations found for models that have not been instantiated a
 			return child;
 		};
 
-	View = (function (_super) {
-		__extends(View, _super);
-
-		// Assignation à `Function.name` (no-op silencieux historiquement, throw
-		// en mode strict). On reproduit l'intent via defineProperty.
-		Object.defineProperty(View, 'name', { value: 'View', configurable: true });
-
-		function View() {
-			return View.__super__.constructor.apply(this, arguments);
-		}
-
-		return View;
-	})(Backbone.Relational.Model);
-
-	View.setup();
-
-	Property = (function (_super) {
-		__extends(Property, _super);
-
-		Object.defineProperty(Property, 'name', { value: 'Property', configurable: true });
-
-		function Property() {
-			return Property.__super__.constructor.apply(this, arguments);
-		}
-
-		Property.prototype.relations = [
-			{
-				type: Backbone.Relational.HasOne,
-				key: 'view',
-				relatedModel: View,
-				reverseRelation: {
-					type: Backbone.Relational.HasMany,
-					key: 'properties'
-				}
+		const View = (function (Super) {
+			__extends(LocalView, Super);
+			Object.defineProperty(LocalView, 'name', { value: 'View', configurable: true });
+			function LocalView() {
+				return LocalView.__super__.constructor.apply(this, arguments);
 			}
-		];
+			return LocalView;
+		})(Backbone.Relational.Model);
 
-		return Property;
-	})(Backbone.Relational.Model);
+		View.setup();
 
-	Property.setup();
-
-	var view = new View({
-		id: 1,
-		properties: [{ id: 1, key: 'width', value: '300px' }]
-	});
-
-	ok(view.get('properties') instanceof Backbone.Relational.Collection);
-});
-
-QUnit.test('ReverseRelations are applied retroactively', function () {
-	// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-	var NewUser = Backbone.Relational.Model.extend({});
-	var NewPerson = Backbone.Relational.Model.extend({
-		relations: [
-			{
-				type: Backbone.Relational.HasOne,
-				key: 'user',
-				relatedModel: NewUser,
-				reverseRelation: {
-					type: Backbone.Relational.HasOne,
-					key: 'person'
-				}
+		const Property = (function (Super) {
+			__extends(LocalProperty, Super);
+			Object.defineProperty(LocalProperty, 'name', { value: 'Property', configurable: true });
+			function LocalProperty() {
+				return LocalProperty.__super__.constructor.apply(this, arguments);
 			}
-		]
-	});
-
-	var user = new NewUser({ id: 'newuser-1' });
-	//var user2 = new NewUser( { id: 'newuser-2', person: 'newperson-1' } );
-	var person = new NewPerson({ id: 'newperson-1', user: user });
-
-	ok(person.get('user') === user);
-	ok(user.get('person') === person);
-	//console.log( person, user );
-});
-
-QUnit.test('ReverseRelations are applied retroactively (2)', function () {
-	var models = {};
-	Backbone.Relational.store.addModelScope(models);
-
-	// Use brand new Model types, so we can be sure we don't have any reverse relations cached from previous tests
-	models.NewPerson = Backbone.Relational.Model.extend({
-		relations: [
-			{
-				type: Backbone.Relational.HasOne,
-				key: 'user',
-				relatedModel: 'NewUser',
-				reverseRelation: {
-					type: Backbone.Relational.HasOne,
-					key: 'person'
-				}
-			}
-		]
-	});
-	models.NewUser = Backbone.Relational.Model.extend({});
-
-	var user = new models.NewUser({ id: 'newuser-1', person: { id: 'newperson-1' } });
-
-	equal(user.getRelations().length, 1);
-	ok(user.get('person') instanceof models.NewPerson);
-});
-
-QUnit.test('Deep reverse relation starting from a collection', function () {
-	var nodes = new NodeList([
-		{
-			id: 1,
-			children: [
+			LocalProperty.prototype.relations = [
 				{
-					id: 2,
-					children: [
-						{
-							id: 3,
-							children: [1]
-						}
-					]
+					type: Backbone.Relational.HasOne,
+					key: 'view',
+					relatedModel: View,
+					reverseRelation: {
+						type: Backbone.Relational.HasMany,
+						key: 'properties'
+					}
+				}
+			];
+			return LocalProperty;
+		})(Backbone.Relational.Model);
+
+		Property.setup();
+
+		const view = new View({
+			id: 1,
+			properties: [{ id: 1, key: 'width', value: '300px' }]
+		});
+
+		expect(view.get('properties')).toBeInstanceOf(Backbone.Relational.Collection);
+	});
+
+	it('ReverseRelations are applied retroactively', () => {
+		const NewUser = Backbone.Relational.Model.extend({});
+		const NewPerson = Backbone.Relational.Model.extend({
+			relations: [
+				{
+					type: Backbone.Relational.HasOne,
+					key: 'user',
+					relatedModel: NewUser,
+					reverseRelation: {
+						type: Backbone.Relational.HasOne,
+						key: 'person'
+					}
 				}
 			]
-		}
-	]);
+		});
 
-	var parent = nodes.first();
-	ok(parent, 'first item accessible after resetting collection');
+		const user = new NewUser({ id: 'newuser-1' });
+		const person = new NewPerson({ id: 'newperson-1', user: user });
 
-	ok(parent.collection === nodes, '`parent.collection` is set to `nodes`');
+		expect(person.get('user')).toBe(user);
+		expect(user.get('person')).toBe(person);
+	});
 
-	var child = parent.get('children').first();
-	ok(child, '`child` can be retrieved from `parent`');
-	ok(child.get('parent'), 'reverse relation from `child` to `parent` works');
+	it('ReverseRelations are applied retroactively (2)', () => {
+		const models = {};
+		Backbone.Relational.store.addModelScope(models);
 
-	var grandchild = child.get('children').first();
-	ok(grandchild, '`grandchild` can be retrieved from `child`');
-
-	ok(grandchild.get('parent'), 'reverse relation from `grandchild` to `child` works');
-
-	ok(grandchild.get('children').first() === parent, 'reverse relation from `grandchild` to `parent` works');
-	ok(parent.get('parent') === grandchild, 'circular reference from `grandchild` to `parent` works');
-});
-
-QUnit.test('Deep reverse relation starting from a collection, with existing model', function () {
-	new Node({ id: 1 });
-
-	var nodes = new NodeList();
-	nodes.set([
-		{
-			id: 1,
-			children: [
+		models.NewPerson = Backbone.Relational.Model.extend({
+			relations: [
 				{
-					id: 2,
-					children: [
-						{
-							id: 3,
-							children: [1]
-						}
-					]
+					type: Backbone.Relational.HasOne,
+					key: 'user',
+					relatedModel: 'NewUser',
+					reverseRelation: {
+						type: Backbone.Relational.HasOne,
+						key: 'person'
+					}
 				}
 			]
-		}
-	]);
+		});
+		models.NewUser = Backbone.Relational.Model.extend({});
 
-	var parent = nodes.first();
-	ok(parent && parent.id === 1, 'first item accessible after resetting collection');
+		const user = new models.NewUser({ id: 'newuser-1', person: { id: 'newperson-1' } });
 
-	var child = parent.get('children').first();
-	ok(child, '`child` can be retrieved from `parent`');
-	ok(child.get('parent'), 'reverse relation from `child` to `parent` works');
+		expect(user.getRelations().length).toBe(1);
+		expect(user.get('person')).toBeInstanceOf(models.NewPerson);
+	});
 
-	var grandchild = child.get('children').first();
-	ok(grandchild, '`grandchild` can be retrieved from `child`');
+	it('Deep reverse relation starting from a collection', () => {
+		const nodes = new NodeList([
+			{
+				id: 1,
+				children: [
+					{
+						id: 2,
+						children: [
+							{
+								id: 3,
+								children: [1]
+							}
+						]
+					}
+				]
+			}
+		]);
 
-	ok(grandchild.get('parent'), 'reverse relation from `grandchild` to `child` works');
+		const parent = nodes.first();
+		expect(parent).toBeTruthy();
 
-	ok(grandchild.get('children').first() === parent, 'reverse relation from `grandchild` to `parent` works');
-	ok(parent.get('parent') === grandchild, 'circular reference from `grandchild` to `parent` works');
+		expect(parent.collection).toBe(nodes);
+
+		const child = parent.get('children').first();
+		expect(child).toBeTruthy();
+		expect(child.get('parent')).toBeTruthy();
+
+		const grandchild = child.get('children').first();
+		expect(grandchild).toBeTruthy();
+
+		expect(grandchild.get('parent')).toBeTruthy();
+
+		expect(grandchild.get('children').first()).toBe(parent);
+		expect(parent.get('parent')).toBe(grandchild);
+	});
+
+	it('Deep reverse relation starting from a collection, with existing model', () => {
+		new Node({ id: 1 });
+
+		const nodes = new NodeList();
+		nodes.set([
+			{
+				id: 1,
+				children: [
+					{
+						id: 2,
+						children: [
+							{
+								id: 3,
+								children: [1]
+							}
+						]
+					}
+				]
+			}
+		]);
+
+		const parent = nodes.first();
+		expect(parent && parent.id === 1).toBe(true);
+
+		const child = parent.get('children').first();
+		expect(child).toBeTruthy();
+		expect(child.get('parent')).toBeTruthy();
+
+		const grandchild = child.get('children').first();
+		expect(grandchild).toBeTruthy();
+
+		expect(grandchild.get('parent')).toBeTruthy();
+
+		expect(grandchild.get('children').first()).toBe(parent);
+		expect(parent.get('parent')).toBe(grandchild);
+	});
 });

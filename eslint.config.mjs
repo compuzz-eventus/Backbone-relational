@@ -96,26 +96,12 @@ export default [
 		}
 	},
 
-	// Tests : globals supplémentaires (QUnit shim + modèles définis par
+	// Tests : globals supplémentaires (modèles définis par
 	// `test/setup/objects.js` sur `window` et utilisés sans `var`).
 	{
 		files: ['test/**/*.js'],
 		languageOptions: {
 			globals: {
-				QUnit: 'readonly',
-				ok: 'readonly',
-				notOk: 'readonly',
-				equal: 'readonly',
-				notEqual: 'readonly',
-				strictEqual: 'readonly',
-				notStrictEqual: 'readonly',
-				deepEqual: 'readonly',
-				notDeepEqual: 'readonly',
-				propEqual: 'readonly',
-				notPropEqual: 'readonly',
-				throws: 'readonly',
-				raises: 'readonly',
-				expect: 'readonly',
 				// Modèles globaux exposés par test/setup/objects.js
 				Zoo: 'readonly',
 				Animal: 'readonly',
@@ -215,14 +201,6 @@ export default [
 		}
 	},
 
-	// Setup file Vitest : `it`, `expect` importés explicitement.
-	{
-		files: ['test/setup/qunit-shim.js'],
-		languageOptions: {
-			sourceType: 'module'
-		}
-	},
-
 	// ESM : wrapper de la lib + benchmarks Vitest natif.
 	{
 		files: ['**/*.mjs', 'bench/**/*.js'],
@@ -231,9 +209,8 @@ export default [
 		}
 	},
 
-	// Tests migrés vers l'API Vitest native (cf. docs/TESTING_MIGRATION.md).
-	// `test/setup/**` reste en CommonJS car les setup files utilisent encore
-	// `require()`/`exports`.
+	// Tests Vitest natifs. `test/setup/**` reste en CommonJS car les setup
+	// files utilisent encore `require()`/`exports`.
 	{
 		files: ['test/*.js'],
 		languageOptions: {

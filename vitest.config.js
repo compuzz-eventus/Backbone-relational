@@ -6,7 +6,7 @@ export default defineConfig({
 		globals: true,
 		include: ['test/*.js'],
 		exclude: ['node_modules/**', 'test/setup/**', 'bench/**'],
-		setupFiles: ['./test/setup/qunit-shim.js', './test/setup/environment.js'],
+		setupFiles: ['./test/setup/environment.js'],
 		benchmark: {
 			include: ['bench/**/*.bench.js'],
 			setupFiles: ['./test/setup/environment.js'],
