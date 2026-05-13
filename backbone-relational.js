@@ -69,7 +69,23 @@
 })((module, Backbone, _, root) => {
 	'use strict';
 
+	/**
+	 * Backbone-relational adds one-to-one and one-to-many relations to
+	 * Backbone.Model + Backbone.Collection. All public classes live under
+	 * `Backbone.Relational` once the library is loaded.
+	 *
+	 * @namespace Backbone.Relational
+	 */
+
 	module.Collection = Backbone.Collection.extend();
+
+	/**
+	 * Global toggle for diagnostic warnings emitted via `console.warn`.
+	 * Default: `true`. Set to `false` in production if you want silence.
+	 *
+	 * @memberof Backbone.Relational
+	 * @type {boolean}
+	 */
 	module.showWarnings = true;
 
 	/**
@@ -91,8 +107,13 @@
 	}
 
 	/**
-	 * Semaphore mixin; can be used as both binary and counting.
-	 **/
+	 * Counting semaphore mixin. `acquire()`/`release()` increment/decrement
+	 * `_permitsUsed`; `isLocked()` is `_permitsUsed > 0`. Used internally to
+	 * prevent re-entrant `set()` calls during relation initialization.
+	 *
+	 * @class Semaphore
+	 * @memberof Backbone.Relational
+	 */
 	module.Semaphore = {
 		_permitsAvailable: null,
 		_permitsUsed: 0,
@@ -126,9 +147,14 @@
 	};
 
 	/**
-	 * A BlockingQueue that accumulates items while blocked (via 'block'),
-	 * and processes them when unblocked (via 'unblock').
-	 * Process can also be called manually (via 'process').
+	 * A FIFO queue that accumulates handlers while blocked (`block()`) and
+	 * runs them when unblocked (`unblock()`). Globally used as
+	 * `Backbone.Relational.eventQueue` to defer `change`/`add`/`remove`
+	 * events until all relations are stabilized.
+	 *
+	 * @class BlockingQueue
+	 * @memberof Backbone.Relational
+	 * @mixes Backbone.Relational.Semaphore
 	 */
 	module.BlockingQueue = function () {
 		this._queue = [];
@@ -193,8 +219,15 @@
 	module.eventQueue = new module.BlockingQueue();
 
 	/**
-	 * Backbone.Store keeps track of all created (and destruction of) Backbone.Relational.Model.
-	 * Handles lookup for relations.
+	 * Global registry of every `Backbone.Relational.Model` ever created.
+	 * Maintains one collection per model-type hierarchy so that
+	 * `findOrCreate({id})` always returns the same instance — this is what
+	 * allows two relations to converge on the same target without explicit
+	 * wiring. Accessed via `Backbone.Relational.store` (singleton).
+	 *
+	 * @class Store
+	 * @memberof Backbone.Relational
+	 * @mixes Backbone.Events
 	 */
 	module.Store = function () {
 		this._collections = [];
@@ -224,15 +257,23 @@
 		},
 
 		/**
-		 * Add a scope for `getObjectByName` to look for model types by name.
-		 * @param {Object} scope
+		 * Register a scope (namespace object) where `getObjectByName` should
+		 * look up class names declared as strings. Use this when your models
+		 * live under `MyApp.models.X` rather than `window.X`.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @param {Object} scope Any object whose keys are class names.
 		 */
 		addModelScope: function (scope) {
 			this._modelScopes.push(scope);
 		},
 
 		/**
-		 * Remove a scope.
+		 * Unregister a previously-added scope.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
 		 * @param {Object} scope
 		 */
 		removeModelScope: function (scope) {
@@ -385,10 +426,15 @@
 		},
 
 		/**
-		 * Find the Store's collection for a certain type of model.
-		 * @param {Backbone.Relational.Model} type
-		 * @param {Boolean} [create=true] Should a collection be created if none is found?
-		 * @return {module.Collection} A collection if found (or applicable for 'model'), or null
+		 * The internal store collection for a given model type. All
+		 * instances of that type are tracked here.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @param {Backbone.Relational.Model} type Model class.
+		 * @param {boolean} [create=true] Create the collection if none
+		 *     exists for this type.
+		 * @returns {?Backbone.Relational.Collection}
 		 */
 		getCollection: function (type, create) {
 			if (type instanceof module.Model) {
@@ -412,9 +458,14 @@
 		},
 
 		/**
-		 * Find a model type on one of the modelScopes by name. Names are split on dots.
-		 * @param {String} name
-		 * @return {Object}
+		 * Resolve a model class given as a string. Dotted names are split
+		 * and walked through each registered model scope. Returns the
+		 * resolved class, or `undefined` if no scope contains it.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @param {string} name e.g. `'Animal'` or `'MyApp.models.Animal'`.
+		 * @returns {?Function}
 		 */
 		getObjectByName: function (name) {
 			const parts = name.split('.');
@@ -485,9 +536,17 @@
 		},
 
 		/**
-		 * Find a specific model of a certain `type` in the store
-		 * @param type
-		 * @param {String|Number|Object|Backbone.Relational.Model} item
+		 * Find an existing instance of `type` in the store. Pure lookup,
+		 * never creates. Use `Model.findOrCreate(item)` when you may need
+		 * to create.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @param {Function} type Model class.
+		 * @param {string|number|Object|Backbone.Relational.Model} item
+		 *     An id, an attributes hash containing the idAttribute, or a
+		 *     Model instance.
+		 * @returns {?Backbone.Relational.Model}
 		 */
 		find: function (type, item) {
 			const id = this.resolveIdForItem(type, item),
@@ -507,7 +566,13 @@
 		},
 
 		/**
-		 * Add a 'model' to its appropriate collection. Retain the original contents of 'model.collection'.
+		 * Add `model` to the store collection for its type. Preserves the
+		 * user-facing `model.collection` reference if one was already set.
+		 * Called automatically by the Model constructor when an id is
+		 * present.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
 		 * @param {Backbone.Relational.Model} model
 		 */
 		register: function (model) {
@@ -560,8 +625,15 @@
 		},
 
 		/**
-		 * Unregister from the store: a specific model, a collection, or a model type.
-		 * @param {Backbone.Relational.Model|Backbone.Relational.Model.constructor|module.Collection} type
+		 * Remove a model, a collection, or every instance of a type from
+		 * the store. Stops listening and detaches the target so it can be
+		 * garbage-collected.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
+		 * @param {Backbone.Relational.Model|Backbone.Relational.Collection|Function} type
+		 *     A model instance to unregister, a collection (all its models),
+		 *     or a model class (every instance of that type).
 		 */
 		unregister: function (type) {
 			let coll, models;
@@ -604,8 +676,16 @@
 		},
 
 		/**
-		 * Reset the `store` to it's original state. The `reverseRelations` are kept though, since attempting to
-		 * re-initialize these on models would lead to a large amount of warnings.
+		 * Empty the store : drop all model instances and clear the
+		 * scopes. Keeps `_reverseRelations` (the registered descriptors)
+		 * since wiping them would force every model class to re-register
+		 * its inverse relations.
+		 *
+		 * Most useful in test setup. Calling this mid-session in an app
+		 * will detach all currently-known models from the store.
+		 *
+		 * @memberof Backbone.Relational.Store
+		 * @instance
 		 */
 		reset: function () {
 			this.stopListening();
@@ -626,20 +706,48 @@
 	module.store = new module.Store();
 
 	/**
-	 * The main Relation class, from which 'HasOne' and 'HasMany' inherit. Internally, 'relational:<key>' events
-	 * are used to regulate addition and removal of models from relations.
+	 * Base class for `HasOne` and `HasMany`. One instance per (host model,
+	 * relation key) pair. Created at the model's first `set()`, lives
+	 * thereafter on `instance._relations[key]`. Internally fires
+	 * `relational:<key>` events to regulate addition/removal of related
+	 * models.
 	 *
-	 * @param {Backbone.Relational.Model} [instance] Model that this relation is created for. If no model is supplied,
-	 *      Relation just tries to instantiate it's `reverseRelation` if specified, and bails out after that.
-	 * @param {Object} options
-	 * @param {string} options.key
-	 * @param {Backbone.Relational.Model.constructor} options.relatedModel
-	 * @param {Boolean|String} [options.includeInJSON=true] Serialize the given attribute for related model(s)' in toJSON, or just their ids.
-	 * @param {Boolean} [options.createModels=true] Create objects from the contents of keys if the object is not found in Backbone.store.
-	 * @param {Object} [options.reverseRelation] Specify a bi-directional relation. If provided, Relation will reciprocate
-	 *    the relation to the 'relatedModel'. Required and optional properties match 'options', except that it also needs
-	 *    {Backbone.Relation|String} type ('HasOne' or 'HasMany').
-	 * @param {Object} opts
+	 * Consumers don't construct `Relation` directly — declare them via the
+	 * `relations: []` array on the host `Backbone.Relational.Model`. See
+	 * `docs/GUIDE.md` for full usage.
+	 *
+	 * @class Relation
+	 * @memberof Backbone.Relational
+	 * @mixes Backbone.Events
+	 * @mixes Backbone.Relational.Semaphore
+	 *
+	 * @param {Backbone.Relational.Model} [instance] Host model. If omitted,
+	 *     the constructor only registers the optional `reverseRelation` on the
+	 *     store and returns without further side effects.
+	 * @param {Object} options Relation descriptor.
+	 * @param {string} options.key Attribute name on the host model.
+	 * @param {Function|string} options.relatedModel Target model class or its
+	 *     string name (resolved lazily through `store.getObjectByName`).
+	 * @param {boolean|string|string[]} [options.includeInJSON=true] What to
+	 *     serialize when the host's `toJSON()` runs — `true` for the full
+	 *     model, a string for one attribute, an array for several, or
+	 *     `false` to exclude.
+	 * @param {boolean} [options.createModels=true] If `false`, refuses to
+	 *     create new models from raw data; only resolves existing ones.
+	 * @param {string} [options.keySource] Attribute name on the *input* data
+	 *     if it differs from `key` (consumed and removed from `attributes`).
+	 * @param {string} [options.keyDestination] Attribute name to write to
+	 *     in `toJSON()` if it differs from `key`.
+	 * @param {boolean|Object} [options.autoFetch=false] Fetch unresolved
+	 *     models at construction. Pass an object to forward to `fetch`.
+	 * @param {boolean} [options.parse=false] Run `relatedModel.parse()` on
+	 *     raw data before instantiation.
+	 * @param {Object} [options.reverseRelation] Auto-generate the inverse
+	 *     relation on `relatedModel`. Requires a `key` to fire. `type` is
+	 *     inferred (`HasOne` → `HasMany` and vice versa) but can be
+	 *     overridden.
+	 * @param {Object} [opts] Backbone-style options forwarded to internal
+	 *     `set` / `change` calls during initialization.
 	 */
 	module.Relation = function (instance, options, opts) {
 		this.instance = instance;
@@ -877,6 +985,15 @@
 		}
 	});
 
+	/**
+	 * 1-to-1 relation. `related` is a single `Backbone.Relational.Model` or
+	 * `null`. The host's attribute (`get(key)`) returns the resolved model,
+	 * not the raw id.
+	 *
+	 * @class HasOne
+	 * @extends Backbone.Relational.Relation
+	 * @memberof Backbone.Relational
+	 */
 	module.HasOne = module.Relation.extend({
 		options: {
 			reverseRelation: { type: 'HasMany' }
@@ -1031,6 +1148,16 @@
 		}
 	});
 
+	/**
+	 * 1-to-N relation. `related` is a `Backbone.Relational.Collection`
+	 * (always — even when empty). Supports `collectionType`,
+	 * `collectionOptions`, and `collectionKey` for customizing the
+	 * underlying collection.
+	 *
+	 * @class HasMany
+	 * @extends Backbone.Relational.Relation
+	 * @memberof Backbone.Relational
+	 */
 	module.HasMany = module.Relation.extend({
 		collectionType: null,
 
@@ -1316,11 +1443,36 @@
 	});
 
 	/**
-	 * A type of Backbone.Model that also maintains relations to other models and collections.
-	 * New events when compared to the original:
-	 *  - 'add:<key>' (model, related collection, options)
-	 *  - 'remove:<key>' (model, related collection, options)
-	 *  - 'change:<key>' (model, related model or collection, options)
+	 * Backbone.Model with relations. Extend it instead of `Backbone.Model`
+	 * for any model that participates in HasOne / HasMany relations.
+	 *
+	 * Additional events compared to `Backbone.Model` :
+	 *   - `add:<key>(model, collection, options)` — relation HasMany got
+	 *     an item.
+	 *   - `remove:<key>(model, collection, options)` — relation HasMany
+	 *     lost an item.
+	 *   - `change:<key>(model, related, options)` — relation changed
+	 *     (also fired for HasOne).
+	 *
+	 * Adds these instance methods : `getRelations`, `getRelation`,
+	 * `getIdsToFetch`, `getAsync`. Adds static methods : `findOrCreate`,
+	 * `find`, `findModel`, `build`, `setup`.
+	 *
+	 * @class Model
+	 * @extends Backbone.Model
+	 * @memberof Backbone.Relational
+	 * @mixes Backbone.Relational.Semaphore
+	 *
+	 * @example
+	 * const Zoo = Backbone.Relational.Model.extend({
+	 *   urlRoot: '/zoo/',
+	 *   relations: [{
+	 *     type: Backbone.Relational.HasMany,
+	 *     key: 'animals',
+	 *     relatedModel: 'Animal',
+	 *     reverseRelation: { key: 'livesIn', includeInJSON: 'id' }
+	 *   }]
+	 * });
 	 */
 	module.Model = Backbone.Model.extend(
 		{
@@ -1511,27 +1663,41 @@
 			},
 
 			/**
-			 * Get a specific relation.
+			 * Get a specific relation by attribute name.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
 			 * @param {string} attr The relation key to look for.
-			 * @return {Backbone.Relation} An instance of 'Backbone.Relation', if a relation was found for 'attr', or null.
+			 * @returns {?Backbone.Relational.Relation} The Relation
+			 *     instance, or `null` if no relation matches `attr`.
 			 */
 			getRelation: function (attr) {
 				return this._relations[attr];
 			},
 
 			/**
-			 * Get all of the created relations.
-			 * @return {Backbone.Relation[]}
+			 * All Relation instances declared on this model.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
+			 * @returns {Backbone.Relational.Relation[]}
 			 */
 			getRelations: function () {
 				return _.values(this._relations);
 			},
 
 			/**
-			 * Get a list of ids that will be fetched on a call to `getAsync`.
-			 * @param {string|Backbone.Relation} attr The relation key to fetch models for.
-			 * @param [refresh=false] Add ids for models that are already in the relation, refreshing them?
-			 * @return {Array} An array of ids that need to be fetched.
+			 * Ids that `getAsync` would actually fetch — the unresolved ones.
+			 * Useful for previewing the network cost before calling
+			 * `getAsync`, or for batching across multiple hosts.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
+			 * @param {string|Backbone.Relational.Relation} attr Relation
+			 *     key or instance.
+			 * @param {boolean} [refresh=false] Include already-resolved ids
+			 *     (forces a refetch of existing models).
+			 * @returns {Array} List of ids to fetch (may be empty).
 			 */
 			getIdsToFetch: function (attr, refresh) {
 				const rel = attr instanceof module.Relation ? attr : this.getRelation(attr),
@@ -1553,13 +1719,31 @@
 			},
 
 			/**
-			 * Get related objects. Returns a single promise, which can either resolve immediately (if the related model[s])
-			 * are already present locally, or after fetching the contents of the requested attribute.
-			 * @param {string} attr The relation key to fetch models for.
-			 * @param {Object} [options] Options for 'Backbone.Model.fetch' and 'Backbone.sync'.
-			 * @param {Boolean} [options.refresh=false] Fetch existing models from the server as well (in order to update them).
-			 * @return {jQuery.Deferred} A jQuery promise object. When resolved, its `done` callback will be called with
-			 *  contents of `attr`.
+			 * Fetch a relation's missing models on demand. Returns a promise
+			 * that resolves to the resolved relation (model or collection).
+			 * When `Collection.url` is a function that returns a different
+			 * URL given a set of ids, `getAsync` uses it once for a batched
+			 * fetch ; otherwise it issues one request per missing id.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @instance
+			 * @param {string} attr Relation key.
+			 * @param {Object} [options] Forwarded to `Backbone.Model.fetch`
+			 *     and `Backbone.sync` (plus the extra options below).
+			 * @param {boolean} [options.refresh=false] Also refetch
+			 *     already-resolved models.
+			 * @param {boolean} [options.add=true] Passed to
+			 *     `Collection.set` on the related collection.
+			 * @param {boolean} [options.remove=false] Same.
+			 * @param {Function} [options.success] Called per fetched model
+			 *     once data lands.
+			 * @param {Function} [options.error] Called per failed model.
+			 * @returns {Promise} jQuery Deferred (or equivalent depending
+			 *     on `Backbone.$`). `done(contents)` receives whatever
+			 *     `Backbone.Model.prototype.get.call(this, attr)` returns.
+			 * @example
+			 * server.getAsync('instances', { refresh: true })
+			 *   .then(coll => renderInstances(coll));
 			 */
 			getAsync: function (attr, options) {
 				// Set default `options` for fetch
@@ -2027,16 +2211,29 @@
 			},
 
 			/**
-			 * Find an instance of `this` type in 'Backbone.store'.
-			 * A new model is created if no matching model is found, `attributes` is an object, and `options.create` is true.
-			 * - If `attributes` is a string or a number, `findOrCreate` will query the `store` and return a model if found.
-			 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
-			 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
+			 * Look up an instance in the store ; create it if missing and
+			 * `options.create !== false`. The canonical entry point for any
+			 * code that constructs models from external data — guarantees a
+			 * single instance per id per type.
+			 *
+			 *   - `attributes` is a string / number → treated as the id.
+			 *   - `attributes` is an object and found in the store → the
+			 *     existing instance is updated with `attributes` unless
+			 *     `options.merge === false`.
+			 *   - Not found and `options.create === false` → returns `null`.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @static
+			 * @param {Object|string|number} attributes Model id, or
+			 *     attributes hash to create/update.
 			 * @param {Object} [options]
-			 * @param {Boolean} [options.create=true]
-			 * @param {Boolean} [options.merge=true]
-			 * @param {Boolean} [options.parse=false]
-			 * @return {Backbone.Relational.Model}
+			 * @param {boolean} [options.create=true] If `false`, only
+			 *     looks up — returns `null` if the model isn't found.
+			 * @param {boolean} [options.merge=true] If `false`, found
+			 *     models keep their existing attributes.
+			 * @param {boolean} [options.parse=false] Run `model.parse()`
+			 *     on `attributes` before the merge/create.
+			 * @returns {?Backbone.Relational.Model}
 			 */
 			findOrCreate: function (attributes, options) {
 				options || (options = {});
@@ -2067,14 +2264,15 @@
 			},
 
 			/**
-			 * Find an instance of `this` type in 'Backbone.store'.
-			 * - If `attributes` is a string or a number, `find` will query the `store` and return a model if found.
-			 * - If `attributes` is an object and is found in the store, the model will be updated with `attributes` unless `options.merge` is `false`.
-			 * @param {Object|String|Number} attributes Either a model's id, or the attributes used to create or update a model.
+			 * Pure lookup variant of {@link Backbone.Relational.Model.findOrCreate}.
+			 * Never creates a new model — returns `null` if no match exists
+			 * in the store. Equivalent to `findOrCreate(attrs, { create: false })`.
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @static
+			 * @param {Object|string|number} attributes
 			 * @param {Object} [options]
-			 * @param {Boolean} [options.merge=true]
-			 * @param {Boolean} [options.parse=false]
-			 * @return {Backbone.Relational.Model}
+			 * @returns {?Backbone.Relational.Model}
 			 */
 			find: function (attributes, options) {
 				options || (options = {});
@@ -2083,10 +2281,15 @@
 			},
 
 			/**
-			 * A hook to override the matching when updating (or creating) a model.
-			 * The default implementation is to look up the model by id in the store.
+			 * Override-friendly hook used by `findOrCreate` / `find` to
+			 * match incoming attributes against existing instances. Default
+			 * looks up by `idAttribute` in the store. Override if your data
+			 * model uses a non-id matcher (e.g. a slug or a composite key).
+			 *
+			 * @memberof Backbone.Relational.Model
+			 * @static
 			 * @param {Object} attributes
-			 * @returns {Backbone.Relational.Model}
+			 * @returns {?Backbone.Relational.Model}
 			 */
 			findModel: function (attributes) {
 				return module.store.find(this, attributes);
