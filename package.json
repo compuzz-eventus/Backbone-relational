@@ -23,7 +23,7 @@
     "backbone": "*"
   },
   "license": "MIT",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "devDependencies": {
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
     "happy-dom": "^20.9.0",
