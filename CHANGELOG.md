@@ -7,38 +7,86 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Upstream Backbone-relational's own release notes (0.10.0 and earlier) live in
 [`index.html`](./index.html#change-log).
 
-## [0.10.9] — 2026-05-13
+## [0.11.0] — 2026-05-13
 
-Dev-toolchain refresh. **No runtime code change** — `backbone-relational.js`
-is identical to 0.10.8, so consumers can upgrade as a drop-in patch. Test
-suite still green (140/140).
+Major dev-toolchain refresh and modernization. The library source itself
+is essentially unchanged — `backbone-relational.js` differs from 0.10.8
+by 2 characters (`==` → `===` in the UMD root detection, see Fixed
+below). This release modernizes everything around the source: package
+manager, test runner, linter/formatter, CI, Backbone peer requirement,
+and developer ergonomics.
+
+Test suite: 140/140 OK in ~1.5 s (vs ~6 s under Karma + Chrome).
+
+### Breaking
+- **`peerDependencies.backbone` tightened from `"*"` to `">=1.7.0"`.**
+  This release tracks the ES2022 modernization of the
+  `compuzz-eventus/backbone` fork (now `1.7.0`). Consumers still on
+  Backbone 1.6.x will see a peer-dependency warning on install.
+- **`engines.node` declared as `">=22"`** to match the CI matrix.
+  Older Node versions install with a warning but are not supported.
+
+### Added
+- **`yarn test:coverage`** — Vitest V8 coverage reporter. Current
+  coverage on `backbone-relational.js`: **92.6 % statements, 80.4 %
+  branches, 93.3 % functions** out of the box.
+- **husky + lint-staged pre-commit hook** — runs `prettier --write` then
+  `eslint --fix` on staged files. Wired via the `prepare` script so
+  `yarn install` enables the hook automatically.
+- **`yarn lint`, `yarn lint:fix`, `yarn format`, `yarn format:check`**
+  scripts.
+- **GitHub Actions workflow** (`.github/workflows/test.yml`) with two
+  jobs in parallel: `Lint & format` (Node 24, Prettier check + ESLint)
+  and `tests` (matrix Node 22 + 24).
+- **`.git-blame-ignore-revs`** so `git blame` skips the Prettier reformat
+  commit and surfaces the real authors.
+- **`.gitattributes`** normalizing line endings to LF across the repo.
 
 ### Changed
-- **Package manager: Yarn 1 → Yarn 4 (via Corepack).** `packageManager` now
-  pins `yarn@4.14.1`. A new `.yarnrc.yml` sets `nodeLinker: node-modules`
+- **Package manager: Yarn 1 → Yarn 4 (via Corepack).** `packageManager`
+  now pins `yarn@4.14.1`. New `.yarnrc.yml` with `nodeLinker: node-modules`
   (no PnP, browserify-era tooling stays compatible), `enableScripts: true`,
-  and `approvedGitRepositories: ["**"]` for the github-hosted `backbone`
-  fork. `yarn.lock` regenerated to Yarn 4's format. `.gitignore` extended
-  with the standard Yarn 4 block.
-- **Test runner: Karma + browserify + QUnit → Vitest + happy-dom.** Cuts
-  the run from ~6 s (headless Chrome) to ~1.5 s (Node) and removes the
-  Chrome dependency entirely. The 140 existing QUnit tests are run
-  unchanged through `test/setup/qunit-shim.js`, a ~150-line adapter that
-  maps `QUnit.module` / `QUnit.test` / `ok` / `equal` / `assert.async` /
-  `assert.expect` onto Vitest's `it` / `expect`. `karma.conf.js` removed.
-  Scripts: `yarn test` (single run) and `yarn test:watch` (watch mode).
-- **`peerDependencies.backbone` normalized to `"*"`.** Yarn 4 rejects the
-  legacy `github:owner/repo#semver:RANGE` form for peer ranges. The
-  github source still resolves through `devDependencies`; runtime
-  expectations are unchanged.
+  and `approvedGitRepositories: ["**"]` for the github-hosted Backbone
+  fork. `yarn.lock` regenerated.
+- **Backbone bumped to 1.7.0** (ES2022 modernization,
+  `compuzz-eventus/backbone` commit `26271ba9`).
+- **Test runner: Karma + browserify + QUnit → Vitest + happy-dom.**
+  Removes the Chrome dependency entirely. The 140 existing QUnit tests
+  run unchanged through `test/setup/qunit-shim.js`, a ~150-line adapter
+  that maps `QUnit.module` / `QUnit.test` / `ok` / `equal` /
+  `assert.async` / `assert.expect` onto Vitest's `it` / `expect`.
+- **Lint: ESLint 9 (`.eslintrc.json`) → ESLint 10 flat config
+  (`eslint.config.mjs`).** Style rules removed (delegated to Prettier).
+  Metric rules (`eqeqeq`, `no-shadow`, `no-undef`,
+  `no-unused-expressions`, etc.) preserved, with targeted relaxations
+  for the legacy source and tests.
+- **Format: Prettier 3** introduced. Convention: tabs/4, single quotes,
+  no trailing comma, LF, `printWidth: 120`. JSON/YAML/Markdown stay in
+  spaces/2.
+- **CI: Travis → GitHub Actions.** `.travis.yml` targeted Node 8 +
+  PhantomJS + karma-cli — completely obsolete.
+- **README and CONTRIBUTING.md** rewritten to reflect the new toolchain.
+- **`.editorconfig`** realigned with the actual convention (tabs/4 in
+  `.js`; the file previously declared spaces/2 but the code has used
+  tabs since 2011).
 
 ### Removed
 - `karma`, `karma-browserify`, `karma-chrome-launcher`, `karma-qunit`,
-  `qunit`, `browserify`, `watchify`, `aliasify`, `lodash` (was only there
-  for the underscore↔lodash aliasify swap in karma.conf.js).
+  `qunit`, `browserify`, `watchify`, `aliasify`, `lodash` (was only
+  there for the underscore↔lodash aliasify swap in `karma.conf.js`).
+- `karma.conf.js`.
+- `bower.json` and the `bower_components/` directory. Bower has been
+  deprecated since 2017 and the upstream Backbone fork has dropped its
+  Bower metadata.
+- `.travis.yml`.
+- `.eslintrc.json` (replaced by flat config).
 
 ### Fixed
-- Two strict-mode incompatibilities surfaced once Vitest started
+- **`backbone-relational.js` UMD root detection** (lines 52-53):
+  `self.self == self` and `global.global == global` → `===`. Strictly
+  equivalent (an object compared to itself) but satisfies `eqeqeq` and
+  is clearer.
+- **Two strict-mode incompatibilities** surfaced once Vitest started
   evaluating test files as ES modules (Karma + browserify ran them in
   sloppy mode). Both were silent no-ops historically:
   - `test/relational-model.js` `constructor.find` test: `person = ...`
@@ -176,5 +224,5 @@ fork at `>=1.6.3`.
 See [`index.html` § Change Log](./index.html#change-log) for the upstream
 PaulUithol release notes.
 
-[0.10.9]: https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.8...0.10.9
+[0.11.0]: https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.8...0.11.0
 [0.10.8]: https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.7...0.10.8
