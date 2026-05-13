@@ -1,61 +1,17 @@
 var _ = window._ = require('underscore');
 var $ = window.$ = require('jquery');
 var Backbone = window.Backbone = require('backbone');
+Backbone.Relational = require('../../backbone-relational');
 
-// QUnit 1.x compatibility shims (these tests were written against the 1.x API).
-// `karma-qunit` injects QUnit on `window` before this file runs.
-(function () {
-	if (typeof QUnit === 'undefined') return;
+// Sous Karma+browserify, tous les fichiers étaient bundlés dans une page unique,
+// donc `objects.js` (qui définit window.Zoo / Animal / Person / …) était toujours
+// évalué. Sous Vitest, chaque fichier de test est isolé : on doit charger
+// `objects.js` ici pour que les tests qui n'invoquent que `setup/setup.js`
+// trouvent quand même les modèles globaux.
+require('./objects');
 
-	// Map the legacy `setup`/`teardown` keys on QUnit.module hooks to `beforeEach`/`afterEach`.
-	var origModule = QUnit.module;
-	QUnit.module = function (name, hooks, nested) {
-		if (hooks && typeof hooks === 'object') {
-			if (hooks.setup && !hooks.beforeEach) hooks.beforeEach = hooks.setup;
-			if (hooks.teardown && !hooks.afterEach) hooks.afterEach = hooks.teardown;
-		}
-		return origModule.apply(QUnit, arguments);
-	};
-
-	// Wrap QUnit.test so the legacy 3-arg form `(name, expected, fn)` keeps working,
-	// and so global assertion helpers (`ok`, `equal`, ...) work without an `assert` param.
-	var assertMethods = [
-		'ok', 'notOk', 'equal', 'notEqual', 'strictEqual', 'notStrictEqual',
-		'deepEqual', 'notDeepEqual', 'propEqual', 'notPropEqual',
-		'throws', 'raises', 'expect'
-	];
-	var origTest = QUnit.test;
-	QUnit.test = function (name, callbackOrExpected, maybeCallback) {
-		var expected, callback;
-		if (typeof callbackOrExpected === 'number') {
-			expected = callbackOrExpected;
-			callback = maybeCallback;
-		} else {
-			callback = callbackOrExpected;
-		}
-
-		return origTest.call(QUnit, name, function (assert) {
-			if (typeof expected === 'number') assert.expect(expected);
-
-			var saved = {};
-			assertMethods.forEach(function (m) {
-				if (typeof assert[m] === 'function') {
-					saved[m] = window[m];
-					window[m] = assert[m].bind(assert);
-				}
-			});
-			try {
-				return callback.call(this, assert);
-			} finally {
-				assertMethods.forEach(function (m) {
-					if (m in saved) window[m] = saved[m];
-				});
-			}
-		});
-	};
-})();
-
-//sessionStorage.clear();
+// La compatibilité QUnit 1.x est gérée par test/setup/qunit-shim.js (chargé en
+// premier via vitest.config setupFiles).
 if ( ! window.console ) {
 	var names = [ 'log', 'debug', 'info', 'warn', 'error', 'assert', 'dir', 'dirxml',
 	'group', 'groupEnd', 'time', 'timeEnd', 'count', 'trace', 'profile', 'profileEnd' ];

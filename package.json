@@ -14,8 +14,8 @@
     "url": "https://github.com/compuzz-eventus/Backbone-relational.git"
   },
   "scripts": {
-    "test": "karma start --single-run --browsers ChromeHeadless",
-    "test:debug": "karma start --no-single-run --auto-watch --browsers Chrome"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
@@ -25,19 +25,12 @@
   "license": "MIT",
   "version": "0.10.8",
   "devDependencies": {
-    "aliasify": "^2.1.0",
     "backbone": "github:compuzz-eventus/backbone#1.6.3",
-    "browserify": "^17.0.1",
+    "happy-dom": "^20.9.0",
     "jquery": "^4.0.0",
-    "karma": "^6.4.4",
-    "karma-browserify": "^8.1.0",
-    "karma-chrome-launcher": "^3.2.0",
-    "karma-qunit": "^4.2.1",
-    "lodash": "^4.17.21",
-    "qunit": "^2.25.0",
     "semver": "^7.6.3",
     "underscore": "^1.13.8",
-    "watchify": "^4.0.0"
+    "vitest": "^4.1.6"
   },
   "packageManager": "yarn@4.14.1"
 }

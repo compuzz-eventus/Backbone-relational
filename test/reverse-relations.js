@@ -314,7 +314,9 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		View = ( function( _super ) {
 			__extends(View, _super);
 
-			View.name = 'View';
+			// Assignation à `Function.name` (no-op silencieux historiquement, throw
+			// en mode strict). On reproduit l'intent via defineProperty.
+			Object.defineProperty(View, 'name', { value: 'View', configurable: true });
 
 			function View() {
 				return View.__super__.constructor.apply( this, arguments );
@@ -328,7 +330,7 @@ QUnit.module( "Reverse relations", { setup: require('./setup/data') } );
 		Property = (function(_super) {
 			__extends(Property, _super);
 
-			Property.name = 'Property';
+			Object.defineProperty(Property, 'name', { value: 'Property', configurable: true });
 
 			function Property() {
 				return Property.__super__.constructor.apply(this, arguments);
