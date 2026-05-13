@@ -7,6 +7,47 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Upstream Backbone-relational's own release notes (0.10.0 and earlier) live in
 [`index.html`](./index.html#change-log).
 
+## [0.10.9] — 2026-05-13
+
+Dev-toolchain refresh. **No runtime code change** — `backbone-relational.js`
+is identical to 0.10.8, so consumers can upgrade as a drop-in patch. Test
+suite still green (140/140).
+
+### Changed
+- **Package manager: Yarn 1 → Yarn 4 (via Corepack).** `packageManager` now
+  pins `yarn@4.14.1`. A new `.yarnrc.yml` sets `nodeLinker: node-modules`
+  (no PnP, browserify-era tooling stays compatible), `enableScripts: true`,
+  and `approvedGitRepositories: ["**"]` for the github-hosted `backbone`
+  fork. `yarn.lock` regenerated to Yarn 4's format. `.gitignore` extended
+  with the standard Yarn 4 block.
+- **Test runner: Karma + browserify + QUnit → Vitest + happy-dom.** Cuts
+  the run from ~6 s (headless Chrome) to ~1.5 s (Node) and removes the
+  Chrome dependency entirely. The 140 existing QUnit tests are run
+  unchanged through `test/setup/qunit-shim.js`, a ~150-line adapter that
+  maps `QUnit.module` / `QUnit.test` / `ok` / `equal` / `assert.async` /
+  `assert.expect` onto Vitest's `it` / `expect`. `karma.conf.js` removed.
+  Scripts: `yarn test` (single run) and `yarn test:watch` (watch mode).
+- **`peerDependencies.backbone` normalized to `"*"`.** Yarn 4 rejects the
+  legacy `github:owner/repo#semver:RANGE` form for peer ranges. The
+  github source still resolves through `devDependencies`; runtime
+  expectations are unchanged.
+
+### Removed
+- `karma`, `karma-browserify`, `karma-chrome-launcher`, `karma-qunit`,
+  `qunit`, `browserify`, `watchify`, `aliasify`, `lodash` (was only there
+  for the underscore↔lodash aliasify swap in karma.conf.js).
+
+### Fixed
+- Two strict-mode incompatibilities surfaced once Vitest started
+  evaluating test files as ES modules (Karma + browserify ran them in
+  sloppy mode). Both were silent no-ops historically:
+  - `test/relational-model.js` `constructor.find` test: `person = ...`
+    now declared with `var`.
+  - `test/reverse-relations.js` CoffeeScript-style class fixtures:
+    `View.name = 'View'` / `Property.name = 'Property'` replaced with
+    `Object.defineProperty(..., 'name', { value: ..., configurable: true })`
+    (assigning to `Function.name` throws in strict mode).
+
 ## [0.10.8] — 2026-05-12
 
 A focused bug-fix and hardening pass over the plugin's relation lifecycle,
@@ -135,4 +176,5 @@ fork at `>=1.6.3`.
 See [`index.html` § Change Log](./index.html#change-log) for the upstream
 PaulUithol release notes.
 
+[0.10.9]: https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.8...0.10.9
 [0.10.8]: https://github.com/compuzz-eventus/Backbone-relational/compare/0.10.7...0.10.8
