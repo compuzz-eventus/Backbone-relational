@@ -1,45 +1,48 @@
-QUnit.module('General / Backbone', { setup: require('./setup/setup').reset });
+import { describe, it, beforeEach, expect } from 'vitest';
+import { reset } from './setup/setup.js';
 
-QUnit.test('Prototypes, constructors and inheritance', function () {
-	// This stuff makes my brain hurt a bit. So, for reference:
-	var Model = Backbone.Model.extend(),
-		i = new Backbone.Model(),
-		iModel = new Model();
+describe('General / Backbone', () => {
+	beforeEach(reset);
 
-	var RelModel = Backbone.Relational.Model.extend(),
-		iRel = new Backbone.Relational.Model(),
-		iRelModel = new RelModel();
+	it('Prototypes, constructors and inheritance', () => {
+		const Model = Backbone.Model.extend();
+		const i = new Backbone.Model();
+		const iModel = new Model();
 
-	// Both are functions, so their `constructor` is `Function`
-	ok(Backbone.Model.constructor === Backbone.Relational.Model.constructor);
+		const RelModel = Backbone.Relational.Model.extend();
+		const iRel = new Backbone.Relational.Model();
+		const iRelModel = new RelModel();
 
-	ok(Backbone.Model !== Backbone.Relational.Model);
-	ok(Backbone.Model === Backbone.Model.prototype.constructor);
-	ok(Backbone.Relational.Model === Backbone.Relational.Model.prototype.constructor);
-	ok(Backbone.Model.prototype.constructor !== Backbone.Relational.Model.prototype.constructor);
+		expect(Backbone.Model.constructor === Backbone.Relational.Model.constructor).toBe(true);
 
-	ok(Model.prototype instanceof Backbone.Model);
-	ok(!(Model.prototype instanceof Backbone.Relational.Model));
-	ok(RelModel.prototype instanceof Backbone.Model);
-	ok(Backbone.Relational.Model.prototype instanceof Backbone.Model);
-	ok(RelModel.prototype instanceof Backbone.Relational.Model);
+		expect(Backbone.Model).not.toBe(Backbone.Relational.Model);
+		expect(Backbone.Model).toBe(Backbone.Model.prototype.constructor);
+		expect(Backbone.Relational.Model).toBe(Backbone.Relational.Model.prototype.constructor);
+		expect(Backbone.Model.prototype.constructor).not.toBe(Backbone.Relational.Model.prototype.constructor);
 
-	ok(i instanceof Backbone.Model);
-	ok(!(i instanceof Backbone.Relational.Model));
-	ok(iRel instanceof Backbone.Model);
-	ok(iRel instanceof Backbone.Relational.Model);
+		expect(Model.prototype instanceof Backbone.Model).toBe(true);
+		expect(Model.prototype instanceof Backbone.Relational.Model).toBe(false);
+		expect(RelModel.prototype instanceof Backbone.Model).toBe(true);
+		expect(Backbone.Relational.Model.prototype instanceof Backbone.Model).toBe(true);
+		expect(RelModel.prototype instanceof Backbone.Relational.Model).toBe(true);
 
-	ok(iModel instanceof Backbone.Model);
-	ok(!(iModel instanceof Backbone.Relational.Model));
-	ok(iRelModel instanceof Backbone.Model);
-	ok(iRelModel instanceof Backbone.Relational.Model);
-});
+		expect(i instanceof Backbone.Model).toBe(true);
+		expect(i instanceof Backbone.Relational.Model).toBe(false);
+		expect(iRel instanceof Backbone.Model).toBe(true);
+		expect(iRel instanceof Backbone.Relational.Model).toBe(true);
 
-QUnit.test('Collection#set', 1, function () {
-	var a = new Backbone.Model({ id: 3, label: 'a' }),
-		b = new Backbone.Model({ id: 2, label: 'b' }),
-		col = new Backbone.Relational.Collection([a]);
+		expect(iModel instanceof Backbone.Model).toBe(true);
+		expect(iModel instanceof Backbone.Relational.Model).toBe(false);
+		expect(iRelModel instanceof Backbone.Model).toBe(true);
+		expect(iRelModel instanceof Backbone.Relational.Model).toBe(true);
+	});
 
-	col.set([a, b], { add: true, merge: false, remove: true });
-	ok(col.length === 2);
+	it('Collection#set', () => {
+		const a = new Backbone.Model({ id: 3, label: 'a' });
+		const b = new Backbone.Model({ id: 2, label: 'b' });
+		const col = new Backbone.Relational.Collection([a]);
+
+		col.set([a, b], { add: true, merge: false, remove: true });
+		expect(col.length).toBe(2);
+	});
 });

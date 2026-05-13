@@ -15,7 +15,7 @@ import globals from 'globals';
  */
 export default [
 	{
-		ignores: ['node_modules/**', '.yarn/**', 'coverage/**', 'static/**', 'docs/**', 'index.html']
+		ignores: ['node_modules/**', '.yarn/**', 'coverage/**', 'static/**', 'docs/**', 'docs-api/**', 'index.html']
 	},
 
 	// Configuration commune au code source et aux tests.
@@ -232,9 +232,10 @@ export default [
 	},
 
 	// Tests migrés vers l'API Vitest native (cf. docs/TESTING_MIGRATION.md).
-	// Étendre cette liste fichier par fichier au fur et à mesure de la migration.
+	// `test/setup/**` reste en CommonJS car les setup files utilisent encore
+	// `require()`/`exports`.
 	{
-		files: ['test/semaphore.js'],
+		files: ['test/*.js'],
 		languageOptions: {
 			sourceType: 'module'
 		}

@@ -1,67 +1,71 @@
-QUnit.module('Backbone.Relational.BlockingQueue', { setup: require('./setup/setup').reset });
+import { describe, it, beforeEach, expect } from 'vitest';
+import { reset } from './setup/setup.js';
 
-QUnit.test('Block', function () {
-	var queue = new Backbone.Relational.BlockingQueue();
-	var count = 0;
-	var increment = function () {
-		count++;
-	};
-	var decrement = function () {
-		count--;
-	};
+describe('Backbone.Relational.BlockingQueue', () => {
+	beforeEach(reset);
 
-	queue.add(increment);
-	ok(count === 1, 'Increment executed right away');
+	it('Block', () => {
+		const queue = new Backbone.Relational.BlockingQueue();
+		let count = 0;
+		const increment = () => {
+			count++;
+		};
+		const decrement = () => {
+			count--;
+		};
 
-	queue.add(decrement);
-	ok(count === 0, 'Decrement executed right away');
+		queue.add(increment);
+		expect(count).toBe(1);
 
-	queue.block();
-	queue.add(increment);
+		queue.add(decrement);
+		expect(count).toBe(0);
 
-	ok(queue.isLocked(), 'Queue is blocked');
-	equal(count, 0, 'Increment did not execute right away');
+		queue.block();
+		queue.add(increment);
 
-	queue.block();
-	queue.block();
+		expect(queue.isLocked()).toBe(true);
+		expect(count).toBe(0);
 
-	equal(queue._permitsUsed, 3, '_permitsUsed should be incremented to 3');
+		queue.block();
+		queue.block();
 
-	queue.unblock();
-	queue.unblock();
-	queue.unblock();
+		expect(queue._permitsUsed).toBe(3);
 
-	equal(count, 1, 'Increment executed');
-});
-
-QUnit.test('process continues after a queued handler throws', function () {
-	var queue = new Backbone.Relational.BlockingQueue();
-	var ran = [];
-
-	queue.block();
-	queue.add(function () {
-		ran.push(1);
-	});
-	queue.add(function () {
-		ran.push(2);
-		throw new Error('simulated');
-	});
-	queue.add(function () {
-		ran.push(3);
-	});
-
-	// The fix logs a warning when a handler throws; silence it during the test.
-	var origWarn = typeof console !== 'undefined' ? console.warn : null;
-	if (origWarn) {
-		console.warn = function () {};
-	}
-	try {
 		queue.unblock();
-	} finally {
-		if (origWarn) {
-			console.warn = origWarn;
-		}
-	}
+		queue.unblock();
+		queue.unblock();
 
-	deepEqual(ran, [1, 2, 3], 'all three handlers ran despite the middle one throwing');
+		expect(count).toBe(1);
+	});
+
+	it('process continues after a queued handler throws', () => {
+		const queue = new Backbone.Relational.BlockingQueue();
+		const ran = [];
+
+		queue.block();
+		queue.add(() => {
+			ran.push(1);
+		});
+		queue.add(() => {
+			ran.push(2);
+			throw new Error('simulated');
+		});
+		queue.add(() => {
+			ran.push(3);
+		});
+
+		const origWarn = typeof console !== 'undefined' ? console.warn : null;
+		if (origWarn) {
+			console.warn = () => {};
+		}
+		try {
+			queue.unblock();
+		} finally {
+			if (origWarn) {
+				console.warn = origWarn;
+			}
+		}
+
+		expect(ran).toEqual([1, 2, 3]);
+	});
 });
