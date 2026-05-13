@@ -54,7 +54,7 @@
 
 	// Set up Backbone-relational for the environment. Start with AMD.
 	if (typeof define === 'function' && define.amd) {
-		define(['exports', 'backbone', 'underscore'], function (exports, Backbone, _) {
+		define(['exports', 'backbone', 'underscore'], (exports, Backbone, _) => {
 			factory(exports, Backbone, _, root);
 		});
 	}
@@ -66,7 +66,7 @@
 	else {
 		root.Backbone.Relational = factory({}, root.Backbone, root._, root);
 	}
-})(function (module, Backbone, _, root) {
+})((module, Backbone, _, root) => {
 	'use strict';
 
 	module.Collection = Backbone.Collection.extend();
@@ -157,7 +157,7 @@
 		process: function () {
 			const queue = this._queue;
 			this._queue = [];
-			queue.forEach(function (event) {
+			queue.forEach((event) => {
 				// Don't let one broken handler swallow the rest of the deferred events:
 				// forEach would abort on the first throw and the remaining items have already
 				// been moved out of `this._queue`, so they would be lost forever.
@@ -295,8 +295,8 @@
 		 * @param {String|Object} relation.relatedModel
 		 */
 		addReverseRelation: function (relation) {
-			const exists = _.any(this._reverseRelations, function (rel) {
-				return _.all(relation || [], function (val, key) {
+			const exists = _.any(this._reverseRelations, (rel) => {
+				return _.all(relation || [], (val, key) => {
 					return val === rel[key];
 				});
 			});
@@ -314,8 +314,8 @@
 		 * @param {Object} relation
 		 */
 		addOrphanRelation: function (relation) {
-			const exists = _.any(this._orphanRelations, function (rel) {
-				return _.all(relation || [], function (val, key) {
+			const exists = _.any(this._orphanRelations, (rel) => {
+				return _.all(relation || [], (val, key) => {
 					return val === rel[key];
 				});
 			});
@@ -374,7 +374,7 @@
 			const coll = this.getCollection(relation.model, false);
 			coll &&
 				coll.each(
-					_.bind(function (model) {
+					_.bind((model) => {
 						if (!(model instanceof relation.model)) {
 							return;
 						}
@@ -400,7 +400,7 @@
 				rootModel = rootModel._superModel;
 			}
 
-			let coll = _.find(this._collections, function (item) {
+			let coll = _.find(this._collections, (item) => {
 				return item.model === rootModel;
 			});
 
@@ -422,10 +422,10 @@
 
 			_.find(
 				this._modelScopes,
-				_.bind(function (scope) {
+				_.bind((scope) => {
 					type = _.reduce(
 						parts || [],
-						function (memo, val) {
+						(memo, val) => {
 							return memo ? memo[val] : undefined;
 						},
 						scope
@@ -592,7 +592,7 @@
 			} else {
 				_.each(
 					models,
-					_.bind(function (model) {
+					_.bind((model) => {
 						if (coll.get(model)) {
 							coll.remove(model);
 						} else {
@@ -783,7 +783,7 @@
 			if (i && _.keys(i._relations).length) {
 				const existing = _.find(
 					i._relations,
-					_.bind(function (rel) {
+					_.bind((rel) => {
 						return rel.key === k;
 					}, this)
 				);
@@ -986,7 +986,7 @@
 			} else if (!options.silent) {
 				const dit = this;
 				this.changed = true;
-				module.eventQueue.add(function () {
+				module.eventQueue.add(() => {
 					dit.instance.trigger(`change:${dit.key}`, dit.instance, dit.related, options, true);
 					dit.changed = false;
 				});
@@ -1009,7 +1009,7 @@
 			// Allow 'model' to set up its relations before proceeding.
 			// (which can result in a call to 'addRelated' from a relation of 'model')
 			const dit = this;
-			model.queue(function () {
+			model.queue(() => {
 				if (model !== dit.related) {
 					const oldRelated = dit.related || null;
 					dit.setRelated(model);
@@ -1215,7 +1215,7 @@
 
 				if (!options.silent) {
 					const dit = this;
-					module.eventQueue.add(function () {
+					module.eventQueue.add(() => {
 						// The `changed` flag can be set in `handleAddition` or `handleRemoval`
 						if (dit.changed) {
 							dit.instance.trigger(`change:${dit.key}`, dit.instance, dit.related, options, true);
@@ -1247,7 +1247,7 @@
 			// Only trigger 'add' once the newly added model is initialized (so, has its relations set up)
 			const dit = this;
 			!options.silent &&
-				module.eventQueue.add(function () {
+				module.eventQueue.add(() => {
 					dit.instance.trigger(`add:${dit.key}`, model, dit.related, options);
 				});
 		},
@@ -1270,7 +1270,7 @@
 
 			const dit = this;
 			!options.silent &&
-				module.eventQueue.add(function () {
+				module.eventQueue.add(() => {
 					dit.instance.trigger(`remove:${dit.key}`, model, dit.related, options);
 				});
 		},
@@ -1279,7 +1279,7 @@
 			const dit = this;
 			options = options ? _.clone(options) : {};
 			!options.silent &&
-				module.eventQueue.add(function () {
+				module.eventQueue.add(() => {
 					dit.instance.trigger(`reset:${dit.key}`, dit.related, options);
 				});
 		},
@@ -1297,7 +1297,7 @@
 			// Allow 'model' to set up its relations before proceeding.
 			// (which can result in a call to 'addRelated' from a relation of 'model')
 			const dit = this;
-			model.queue(function () {
+			model.queue(() => {
 				if (dit.related && !dit.related.get(model)) {
 					dit.related.add(model, _.defaults({ parse: false }, options));
 				}
@@ -1360,7 +1360,7 @@
 					collection.on('relational:add', processQueue);
 
 					// So we do process the queue eventually, regardless of whether this model actually gets added to 'options.collection'.
-					_.defer(function () {
+					_.defer(() => {
 						processQueue(dit);
 					});
 				}
@@ -1392,7 +1392,7 @@
 						// If we're not in a more complicated nested scenario, fire the change event right away
 						Backbone.Model.prototype.trigger.apply(dit, args);
 					} else {
-						module.eventQueue.add(function () {
+						module.eventQueue.add(() => {
 							// Determine if the `change` event is still valid, now that all relations are populated
 							let changed = true;
 							if (eventName === 'change') {
@@ -1542,7 +1542,7 @@
 				// On `refresh`, add the ids for current models in the relation to `idsToFetch`
 				if (refresh) {
 					const models = rel.related && (rel.related.models || [rel.related]);
-					_.each(models, function (model) {
+					_.each(models, (model) => {
 						if (model.id || model.id === 0) {
 							ids.push(model.id);
 						}
@@ -1579,7 +1579,7 @@
 						// Find (or create) a model for each one that is to be fetched
 						models = _.map(
 							idsToFetch,
-							_.bind(function (id) {
+							_.bind((id) => {
 								let model = rel.relatedModel.findModel(id);
 
 								if (!model) {
@@ -1618,7 +1618,7 @@
 						const opts = _.defaults(
 							{
 								error: function () {
-									_.each(createdModels, function (model) {
+									_.each(createdModels, (model) => {
 										model.trigger('destroy', model, model.collection, options);
 									});
 
@@ -1637,7 +1637,7 @@
 							// for batch and `success(model, ...)` for per-model from the same
 							// `autoFetch.success` declaration.
 							opts.success = function (collection, response, fetchOpts) {
-								_.each(idsToFetch, function (id) {
+								_.each(idsToFetch, (id) => {
 									const m = rel.relatedModel.findModel(id);
 									if (m) origSuccess.call(fetchOpts && fetchOpts.context, m, response, fetchOpts);
 								});
@@ -1653,7 +1653,7 @@
 
 						requests = _.map(
 							models,
-							_.bind(function (model) {
+							_.bind((model) => {
 								const opts = _.defaults(
 									{
 										error: function () {
@@ -1671,7 +1671,7 @@
 					}
 				}
 
-				return this.deferArray(requests).then(function () {
+				return this.deferArray(requests).then(() => {
 					return Backbone.Model.prototype.get.call(dit, attr);
 				});
 			},
@@ -1736,7 +1736,7 @@
 					attributes[this.idAttribute] = null;
 				}
 
-				_.each(this.getRelations(), function (rel) {
+				_.each(this.getRelations(), (rel) => {
 					delete attributes[rel.key];
 				});
 
@@ -1766,7 +1766,7 @@
 					return v;
 				}
 
-				_.each(this._relations, function (rel) {
+				_.each(this._relations, (rel) => {
 					const related = json[rel.key];
 					const includeInJSON = rel.options.includeInJSON;
 					let value = null;
@@ -1778,7 +1778,7 @@
 					} else if (_.isString(includeInJSON)) {
 						if (related instanceof module.Collection) {
 							const plucked = related.pluck(includeInJSON);
-							value = _.map(plucked, function (v) {
+							value = _.map(plucked, (v) => {
 								return serializeMaybe(v, options);
 							});
 						} else if (related instanceof Backbone.Model) {
@@ -1800,9 +1800,9 @@
 					} else if (_.isArray(includeInJSON)) {
 						if (related instanceof Backbone.Collection) {
 							value = [];
-							related.each(function (model) {
+							related.each((model) => {
 								const curJson = {};
-								_.each(includeInJSON, function (key) {
+								_.each(includeInJSON, (key) => {
 									const v = model.get(key);
 									curJson[key] = serializeMaybe(v, options);
 								});
@@ -1810,7 +1810,7 @@
 							});
 						} else if (related instanceof Backbone.Model) {
 							value = {};
-							_.each(includeInJSON, function (key) {
+							_.each(includeInJSON, (key) => {
 								const v = related.get(key);
 								value[key] = serializeMaybe(v, options);
 							});
@@ -1836,7 +1836,7 @@
 				});
 
 				const relationKeys = _.pluck(this._relations, 'key');
-				_.each(json, function (val, key) {
+				_.each(json, (val, key) => {
 					if (_.contains(relationKeys, key)) return; // déjà géré ci-dessus
 					if (!val) return;
 
@@ -1980,7 +1980,7 @@
 				if (this.prototype.subModelTypes) {
 					const resolvedSubModels = _.keys(this._subModels);
 					const unresolvedSubModels = _.omit(this.prototype.subModelTypes, resolvedSubModels);
-					_.each(unresolvedSubModels, function (subModelTypeName) {
+					_.each(unresolvedSubModels, (subModelTypeName) => {
 						const subModelType = module.store.getObjectByName(subModelTypeName);
 						subModelType && subModelType.initializeModelHierarchy();
 					});
@@ -2009,7 +2009,7 @@
 							_.bind(function (superRel) {
 								return !_.any(
 									this.prototype.relations || [],
-									_.bind(function (rel) {
+									_.bind((rel) => {
 										return superRel.relatedModel === rel.relatedModel && superRel.key === rel.key;
 									}, this)
 								);
@@ -2281,7 +2281,7 @@
 				args[3] = _.clone(args[3]);
 			}
 
-			module.eventQueue.add(function () {
+			module.eventQueue.add(() => {
 				trigger.apply(dit, args);
 			});
 		} else {

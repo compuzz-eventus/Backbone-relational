@@ -189,6 +189,10 @@ export default [
 			'no-var': 'error',
 			'prefer-const': ['error', { destructuring: 'all' }],
 			'prefer-template': 'error',
+			// `prefer-arrow-callback` ne convertit QUE les callbacks où ESLint
+			// peut prouver que `this`/`arguments`/`new.target` ne sont pas
+			// utilisés. Safe en --fix.
+			'prefer-arrow-callback': ['error', { allowNamedFunctions: false, allowUnboundThis: true }],
 			// object-shorthand reste désactivé : il convertit
 			// `constructor: function () {}` en `constructor () {}`, qui en
 			// strict mode n'est plus utilisable comme constructeur (shorthand
