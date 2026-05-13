@@ -24,9 +24,19 @@ import { it, expect } from 'vitest';
  */
 
 const HELPERS = [
-	'ok', 'notOk', 'equal', 'notEqual', 'strictEqual', 'notStrictEqual',
-	'deepEqual', 'notDeepEqual', 'propEqual', 'notPropEqual',
-	'throws', 'raises', 'expect'
+	'ok',
+	'notOk',
+	'equal',
+	'notEqual',
+	'strictEqual',
+	'notStrictEqual',
+	'deepEqual',
+	'notDeepEqual',
+	'propEqual',
+	'notPropEqual',
+	'throws',
+	'raises',
+	'expect'
 ];
 
 function makeAssert() {
@@ -34,11 +44,19 @@ function makeAssert() {
 	let expected = null;
 	const pendingAsync = [];
 
-	const inc = () => { count++; };
+	const inc = () => {
+		count++;
+	};
 
 	const a = {
-		ok(value, message) { inc(); expect(value, message).toBeTruthy(); },
-		notOk(value, message) { inc(); expect(value, message).toBeFalsy(); },
+		ok(value, message) {
+			inc();
+			expect(value, message).toBeTruthy();
+		},
+		notOk(value, message) {
+			inc();
+			expect(value, message).toBeFalsy();
+		},
 		equal(actual, expectedVal, message) {
 			inc();
 			// QUnit.equal compare en `==` (loose). On approxime : `==` direct si l'un est primitif.
@@ -86,11 +104,17 @@ function makeAssert() {
 				expect(block, message).toThrow(expectedError);
 			}
 		},
-		raises(...args) { return a.throws(...args); },
-		expect(n) { expected = n; },
+		raises(...args) {
+			return a.throws(...args);
+		},
+		expect(n) {
+			expected = n;
+		},
 		async() {
 			let resolve;
-			const p = new Promise((res) => { resolve = res; });
+			const p = new Promise((res) => {
+				resolve = res;
+			});
 			pendingAsync.push(p);
 			return () => resolve();
 		}
@@ -163,9 +187,11 @@ globalThis.QUnit = {
 				await ctx.waitAsync();
 
 				const explicitExpect = ctx.getExpected();
-				const declaredExpected = (explicitExpect != null) ? explicitExpect : expected;
+				const declaredExpected = explicitExpect != null ? explicitExpect : expected;
 				if (typeof declaredExpected === 'number') {
-					expect(ctx.getCount(), `Expected ${declaredExpected} assertions, got ${ctx.getCount()}`).toBe(declaredExpected);
+					expect(ctx.getCount(), `Expected ${declaredExpected} assertions, got ${ctx.getCount()}`).toBe(
+						declaredExpected
+					);
 				}
 			} finally {
 				uninstallGlobals(saved);

@@ -32,14 +32,14 @@ module.exports = function initObjects() {
 		ceo: {
 			name: 'Big Boy'
 		},
-		employees: [ { person: 'person-3' } ], // uses the 'Job' link table to achieve many-to-many. No 'id' specified!
+		employees: [{ person: 'person-3' }], // uses the 'Job' link table to achieve many-to-many. No 'id' specified!
 		resource_uri: 'company-1'
 	});
 
 	window.newCompany = new Company({
 		id: 'company-2',
 		name: 'New Corp.',
-		employees: [ { person: 'person-2' } ],
+		employees: [{ person: 'person-2' }],
 		resource_uri: 'company-2'
 	});
 
@@ -56,4 +56,4 @@ module.exports = function initObjects() {
 		occupants: [],
 		resource_uri: 'house-2'
 	});
-}
+};

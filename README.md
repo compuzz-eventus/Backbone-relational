@@ -87,6 +87,7 @@ Defined in `package.json`:
 - `npm run test:debug` — Start Karma in watch mode with Chrome for local debugging.
 
 Notes:
+
 - Tests are bundled with Browserify. By default, Underscore is used. To alias Underscore to Lodash for tests, Karma supports a `lodash` flag. Example:
   - Using npm: `npm test -- --lodash true` or `karma start --single-run --browsers PhantomJS --lodash true`
   - Using debug: `npm run test:debug -- --lodash true`
@@ -111,6 +112,7 @@ Test files live in `test/*.js` with setup helpers under `test/setup/`. The Karma
 No mandatory environment variables are required for running the library or tests.
 
 Optional Karma flag:
+
 - `lodash` (boolean): when true, tests alias `underscore` to `lodash` via `aliasify`.
 
 ## Project structure
@@ -140,6 +142,7 @@ The test suite is configured for PhantomJS (headless) and Chrome (local debug). 
 The current `package.json` lists version `0.10.5`.
 
 TODO:
+
 - Document the release process (tags, changelog, publishing to npm/bower, website update).
 
 ## Contributing
