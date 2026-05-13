@@ -50,6 +50,11 @@ Include the script after Backbone and Underscore (or Lodash):
 
 Then define relations on your `Backbone.Model` subclasses (see the documentation site for full API and examples).
 
+> **Reference documentation in this repo**
+>
+> - [`docs/GUIDE.md`](./docs/GUIDE.md) — usage guide ("when to use what") with decision tables, code patterns, and gotchas, for consumers of the library.
+> - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — internal architecture (event queue, semaphore, init order, refactor history), for contributors and debuggers.
+
 > **Important — `Backbone.Collection` behavior change (since 0.10.8)**
 >
 > Reverse-relation hooks (`relational:add` / `relational:remove`) are only emitted by `Backbone.Relational.Collection`, **not** by vanilla `Backbone.Collection`. If you `extend` from `Backbone.Collection` with `model: SomeRelationalModel`, reverse relations will not update automatically. Use `Backbone.Relational.Collection.extend({ model: ... })` for any collection that holds relational models.

@@ -1,6 +1,8 @@
 # backbone-relational — Architecture interne
 
-Document de référence sur le comportement interne du plugin. Garde-le à jour quand le code change.
+Document de référence sur le comportement **interne** du plugin (event queue, semaphore, ordre d'init, refactors passés). Garde-le à jour quand le code change.
+
+> Pour l'utilisation (« quand utiliser quoi », options de relation, patterns) du côté consommateur, voir [`GUIDE.md`](./GUIDE.md).
 
 ## 1. Layout du fichier
 
