@@ -167,7 +167,7 @@ export default [
 		}
 	},
 
-	// Source legacy : code 2011 dont les "violations" sont volontaires.
+	// Source : code ES5+ progressivement modernisé vers ES2022.
 	{
 		files: ['backbone-relational.js'],
 		rules: {
@@ -178,15 +178,28 @@ export default [
 			'new-cap': 'off',
 			// Shadowing intentionnel dans les closures de relations.
 			'no-shadow': 'off',
-			// `var` hoisting et réutilisation hors bloc — pattern ES5 voulu.
-			'block-scoped-var': 'off',
 			// `undefined` utilisé explicitement comme sentinel.
 			'no-undefined': 'off',
 			// Cosmétique : on l'a laissé en warning historiquement, mais
 			// `eslint --fix` (lint-staged) le ré-écrit mal et casse l'indent
 			// que Prettier vient d'appliquer. On désactive pour stopper
 			// l'auto-fix destructeur sur ce fichier legacy.
-			'no-else-return': 'off'
+			'no-else-return': 'off',
+			// Modernisation ES2022.
+			'no-var': 'error',
+			'prefer-const': ['error', { destructuring: 'all' }],
+			'prefer-template': 'error',
+			// `prefer-arrow-callback` ne convertit QUE les callbacks où ESLint
+			// peut prouver que `this`/`arguments`/`new.target` ne sont pas
+			// utilisés. Safe en --fix.
+			'prefer-arrow-callback': ['error', { allowNamedFunctions: false, allowUnboundThis: true }],
+			// object-shorthand reste désactivé : il convertit
+			// `constructor: function () {}` en `constructor () {}`, qui en
+			// strict mode n'est plus utilisable comme constructeur (shorthand
+			// methods are non-constructible). Backbone.Model.extend appelle
+			// le `constructor` via `new`, donc cette conversion casse toute
+			// instanciation.
+			'object-shorthand': 'off'
 		}
 	},
 
