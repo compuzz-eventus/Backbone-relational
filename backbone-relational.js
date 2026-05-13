@@ -553,7 +553,7 @@
 			}
 
 			// This triggers updating the lookup indices kept in a collection
-			coll._onModelEvent('change:' + model.idAttribute, model, coll);
+			coll._onModelEvent(`change:${model.idAttribute}`, model, coll);
 
 			// Trigger an event on model so related models (having the model's new id in their keyContents) can add it.
 			model.trigger('relational:change:id', model, coll);
@@ -883,7 +883,7 @@
 		},
 
 		initialize: function (opts) {
-			this.listenTo(this.instance, 'relational:change:' + this.key, this.onChange);
+			this.listenTo(this.instance, `relational:change:${this.key}`, this.onChange);
 
 			const related = this.findRelated(opts);
 			this.setRelated(related);
@@ -987,7 +987,7 @@
 				const dit = this;
 				this.changed = true;
 				module.eventQueue.add(function () {
-					dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
+					dit.instance.trigger(`change:${dit.key}`, dit.instance, dit.related, options, true);
 					dit.changed = false;
 				});
 			}
@@ -1042,7 +1042,7 @@
 		},
 
 		initialize: function (opts) {
-			this.listenTo(this.instance, 'relational:change:' + this.key, this.onChange);
+			this.listenTo(this.instance, `relational:change:${this.key}`, this.onChange);
 
 			// Handle a custom 'collectionType'
 			this.collectionType = this.options.collectionType;
@@ -1218,7 +1218,7 @@
 					module.eventQueue.add(function () {
 						// The `changed` flag can be set in `handleAddition` or `handleRemoval`
 						if (dit.changed) {
-							dit.instance.trigger('change:' + dit.key, dit.instance, dit.related, options, true);
+							dit.instance.trigger(`change:${dit.key}`, dit.instance, dit.related, options, true);
 							dit.changed = false;
 						}
 					});
@@ -1248,7 +1248,7 @@
 			const dit = this;
 			!options.silent &&
 				module.eventQueue.add(function () {
-					dit.instance.trigger('add:' + dit.key, model, dit.related, options);
+					dit.instance.trigger(`add:${dit.key}`, model, dit.related, options);
 				});
 		},
 
@@ -1271,7 +1271,7 @@
 			const dit = this;
 			!options.silent &&
 				module.eventQueue.add(function () {
-					dit.instance.trigger('remove:' + dit.key, model, dit.related, options);
+					dit.instance.trigger(`remove:${dit.key}`, model, dit.related, options);
 				});
 		},
 
@@ -1280,7 +1280,7 @@
 			options = options ? _.clone(options) : {};
 			!options.silent &&
 				module.eventQueue.add(function () {
-					dit.instance.trigger('reset:' + dit.key, dit.related, options);
+					dit.instance.trigger(`reset:${dit.key}`, dit.related, options);
 				});
 		},
 
@@ -1481,7 +1481,7 @@
 								// Update a relation if its value differs from this model's attributes, or it's been explicitly nullified.
 								// Which can also happen before the originally intended related model has been found (`val` is null).
 								if (rel.related !== value || (value === null && attr === null)) {
-									this.trigger('relational:change:' + rel.key, this, value, options || {});
+									this.trigger(`relational:change:${rel.key}`, this, value, options || {});
 								}
 							}
 

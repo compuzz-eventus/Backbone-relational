@@ -185,11 +185,17 @@ export default [
 			// que Prettier vient d'appliquer. On désactive pour stopper
 			// l'auto-fix destructeur sur ce fichier legacy.
 			'no-else-return': 'off',
-			// Modernisation ES2022 : on bascule progressivement les `var` vers
-			// `const`/`let`. `--fix` les transforme automatiquement quand c'est
-			// sûr (pas de réassignation pour const, scope clair pour let).
+			// Modernisation ES2022.
 			'no-var': 'error',
-			'prefer-const': ['error', { destructuring: 'all' }]
+			'prefer-const': ['error', { destructuring: 'all' }],
+			'prefer-template': 'error',
+			// object-shorthand reste désactivé : il convertit
+			// `constructor: function () {}` en `constructor () {}`, qui en
+			// strict mode n'est plus utilisable comme constructeur (shorthand
+			// methods are non-constructible). Backbone.Model.extend appelle
+			// le `constructor` via `new`, donc cette conversion casse toute
+			// instanciation.
+			'object-shorthand': 'off'
 		}
 	},
 
