@@ -8,41 +8,35 @@ Documentation: http://backbonerelational.org
 
 ## Overview
 
-This repository contains the Backbone-relational library and its tests. The library is a single-file module intended for use in browser environments alongside Backbone and Underscore/Lodash.
+This repository contains the Backbone-relational library and its tests. The library is a single-file UMD module (`backbone-relational.js`) intended for use in browser environments alongside Backbone and Underscore (or Lodash). Tests run in Node via a happy-dom environment, so no browser is required for development.
 
 ## Tech stack
 
-- Language: JavaScript (browser)
-- Library: Backbone.js (peer dependency)
-- Utility: Underscore (default) or Lodash (optional via alias)
-- Test runner: Karma
-- Test framework: QUnit
-- Bundler for tests: Browserify (with optional `aliasify` transform)
-- Package managers: npm and Yarn (both lockfiles present); Bower metadata is also provided
+- **Library**: single-file UMD JavaScript (`backbone-relational.js`)
+- **Peer dependency**: [Backbone.js](https://github.com/jashkenas/backbone) (this fork targets [`compuzz-eventus/backbone`](https://github.com/compuzz-eventus/backbone) ≥ 1.6.3)
+- **Utility**: Underscore (default), Lodash 4 also supported via the internal compat layer
+- **Test runner**: [Vitest](https://vitest.dev/) 4 with the `happy-dom` environment
+- **Test API**: legacy QUnit 1.x tests run unchanged via a thin shim (`test/setup/qunit-shim.js`) that dispatches to Vitest's `it`/`expect`
+- **Lint & format**: ESLint 10 (flat config) + Prettier 3
+- **Package manager**: Yarn 4 via [Corepack](https://nodejs.org/api/corepack.html)
+- **CI**: GitHub Actions (Node 22 + 24)
 
 ## Requirements
 
-- Node.js (an LTS version is recommended)
-- npm or Yarn
-- A browser to run/debug tests locally:
-  - Headless: PhantomJS (used in CI via Karma)
-  - Local debug: Google Chrome
+- **Node.js 22 or 24** (the CI matrix). Other recent LTS versions likely work but are not tested.
+- **Corepack** (shipped with Node ≥ 16) — used to pin Yarn 4. Run `corepack enable` once per machine.
+- **No browser is needed** to run the test suite locally; happy-dom provides the DOM in Node.
 
 ## Installation
 
 Clone the repo and install dev dependencies:
 
 ```bash
-# using npm
-npm install
-
-# or using Yarn
+corepack enable        # one-time, enables Yarn 4 from packageManager
 yarn install
 ```
 
 Backbone-relational itself is a single file (`backbone-relational.js`). If you consume it directly in the browser, make sure Backbone and Underscore (or Lodash) are loaded first.
-
-If you use Bower, metadata is available in `bower.json` with `main` set to `backbone-relational.js`.
 
 ## Usage
 
@@ -55,6 +49,10 @@ Include the script after Backbone and Underscore (or Lodash):
 ```
 
 Then define relations on your `Backbone.Model` subclasses (see the documentation site for full API and examples).
+
+> **Important — `Backbone.Collection` behavior change (since 0.10.8)**
+>
+> Reverse-relation hooks (`relational:add` / `relational:remove`) are only emitted by `Backbone.Relational.Collection`, **not** by vanilla `Backbone.Collection`. If you `extend` from `Backbone.Collection` with `model: SomeRelationalModel`, reverse relations will not update automatically. Use `Backbone.Relational.Collection.extend({ model: ... })` for any collection that holds relational models.
 
 ### Cycle-safe serialization (toJSON)
 
@@ -77,81 +75,70 @@ Note: If you manually call `toJSON` across multiple objects and want bounded dee
 
 - Browser/global build: `backbone-relational.js` (UMD/vanilla script)
 - `package.json` `main`: `backbone-relational.js`
-- `bower.json` `main`: `backbone-relational.js`
 
 ## Scripts
 
 Defined in `package.json`:
 
-- `npm test` — Run the test suite once in PhantomJS via Karma.
-- `npm run test:debug` — Start Karma in watch mode with Chrome for local debugging.
-
-Notes:
-
-- Tests are bundled with Browserify. By default, Underscore is used. To alias Underscore to Lodash for tests, Karma supports a `lodash` flag. Example:
-  - Using npm: `npm test -- --lodash true` or `karma start --single-run --browsers PhantomJS --lodash true`
-  - Using debug: `npm run test:debug -- --lodash true`
+| Script              | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `yarn test`         | Run the full Vitest suite once (happy-dom).                |
+| `yarn test:watch`   | Run Vitest in watch mode for local development.            |
+| `yarn lint`         | Run ESLint on the whole repo.                              |
+| `yarn lint:fix`     | Run ESLint with `--fix` to auto-correct what can be fixed. |
+| `yarn format`       | Format every file via Prettier.                            |
+| `yarn format:check` | Check that every file matches Prettier without writing.    |
 
 ## Running tests
 
 ```bash
-# run once in PhantomJS
-npm test
-
-# or with Yarn
-yarn test
-
-# debug in Chrome with file watching
-npm run test:debug
+yarn test            # single run, ~1.5s
+yarn test:watch      # watch mode, re-runs on file changes
 ```
 
-Test files live in `test/*.js` with setup helpers under `test/setup/`. The Karma configuration is in `karma.conf.js`.
-
-## Environment variables
-
-No mandatory environment variables are required for running the library or tests.
-
-Optional Karma flag:
-
-- `lodash` (boolean): when true, tests alias `underscore` to `lodash` via `aliasify`.
+Test files live in `test/*.js` with shared fixtures and helpers under `test/setup/`. The Vitest configuration is in `vitest.config.js`; the QUnit-to-Vitest adapter lives in `test/setup/qunit-shim.js`.
 
 ## Project structure
 
 ```
 .
-├─ backbone-relational.js       # Library source (single-file)
-├─ test/                        # QUnit tests and setup
+├─ backbone-relational.js       # Library source (single-file UMD)
+├─ test/                        # QUnit tests + setup helpers
 │  ├─ setup/
-│  └─ *.js
-├─ karma.conf.js                # Karma test runner configuration
+│  │  ├─ environment.js         # Boots Backbone/_/$ and the AJAX mock
+│  │  ├─ objects.js             # Fixture models (Zoo, Animal, …)
+│  │  ├─ data.js                # Fixture instances (person1, ourHouse, …)
+│  │  └─ qunit-shim.js          # QUnit 1.x → Vitest adapter
+│  └─ *.js                      # The 16 test files (140 tests total)
+├─ vitest.config.js             # Vitest configuration (happy-dom, setupFiles)
+├─ eslint.config.mjs            # ESLint flat config (v9+)
+├─ .prettierrc.json             # Prettier configuration
+├─ .github/workflows/test.yml   # CI: lint job + test matrix (Node 22, 24)
 ├─ index.html                   # Demo/landing page (repo site)
+├─ docs/                        # Architecture docs
 ├─ static/                      # Site assets
-├─ package.json                 # npm package metadata and scripts
-├─ yarn.lock / package-lock.json# Lockfiles
-├─ bower.json                   # Bower metadata
+├─ CHANGELOG.md                 # Release notes (Keep a Changelog)
+├─ package.json                 # npm package metadata + scripts
+├─ yarn.lock                    # Lockfile (Yarn 4)
 ├─ LICENSE.txt                  # MIT license
 └─ README.md                    # This file
 ```
 
 ## Browser support
 
-The test suite is configured for PhantomJS (headless) and Chrome (local debug). Actual runtime compatibility depends on the Backbone/Underscore versions you use.
+The library itself is plain ES5 UMD and runs in any browser supported by your Backbone version. The test suite no longer requires a browser — it runs in Node with happy-dom — so "browser support" refers only to runtime targets, not the test toolchain.
 
 ## Versioning and releases
 
-The current `package.json` lists version `0.10.5`.
-
-TODO:
-
-- Document the release process (tags, changelog, publishing to npm/bower, website update).
+Current version: see `package.json` (`version` field). Release notes live in [`CHANGELOG.md`](./CHANGELOG.md), formatted per [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and following [Semantic Versioning](https://semver.org/spec/v2.0.0.html). For releases ≤ 0.10.0 (upstream), see the legacy notes in [`index.html`](./index.html#change-log).
 
 ## Contributing
 
-See `CONTRIBUTING.md` for guidelines.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for guidelines.
 
 ## License
 
-Backbone-relational is released under the MIT License. See [`LICENSE.txt`](LICENSE.txt).
+Backbone-relational is released under the MIT License. See [`LICENSE.txt`](./LICENSE.txt).
 
 ## Links
 
