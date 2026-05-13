@@ -20,7 +20,7 @@
   "author": "Compuzz-Eventus <https://github.com/compuzz-eventus>",
   "contributors": "Listed at <https://github.com/compuzz-eventus/Backbone-relational/contributors>",
   "peerDependencies": {
-    "backbone": "github:compuzz-eventus/backbone#semver:>=1.6.3"
+    "backbone": "*"
   },
   "license": "MIT",
   "version": "0.10.8",
@@ -39,5 +39,5 @@
     "underscore": "^1.13.8",
     "watchify": "^4.0.0"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@4.14.1"
 }
