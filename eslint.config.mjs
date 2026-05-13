@@ -201,11 +201,21 @@ export default [
 		}
 	},
 
-	// ESM : wrapper de la lib + benchmarks Vitest natif.
+	// ESM : wrapper de la lib + benchmarks Vitest natif + tests Playwright.
 	{
-		files: ['**/*.mjs', 'bench/**/*.js'],
+		files: ['**/*.mjs', 'bench/**/*.js', 'test-browser/**/*.js', 'playwright.config.js'],
 		languageOptions: {
 			sourceType: 'module'
+		}
+	},
+
+	// Tests Playwright : `page.goto()` est l'API officielle, mais `goto` est un
+	// "future reserved word" en ES3 — la règle `dot-notation` (config root)
+	// le rejette. On la relâche pour ce dossier.
+	{
+		files: ['test-browser/**/*.js'],
+		rules: {
+			'dot-notation': ['error', { allowKeywords: true }]
 		}
 	},
 
