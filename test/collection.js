@@ -1,333 +1,297 @@
-var semver = require('semver');
+import { describe, it, beforeEach, expect } from 'vitest';
+import semver from 'semver';
+import { reset } from './setup/setup.js';
 
-QUnit.module('Backbone.Relational.Collection', { setup: require('./setup/setup').reset });
+describe('Backbone.Relational.Collection', () => {
+	beforeEach(reset);
 
-QUnit.test("Loading (fetching) multiple times updates the model, and relations's `keyContents`", function () {
-	var collA = new Backbone.Relational.Collection();
-	collA.model = User;
-	var collB = new Backbone.Relational.Collection();
-	collB.model = User;
+	it("Loading (fetching) multiple times updates the model, and relations's `keyContents`", () => {
+		const collA = new Backbone.Relational.Collection();
+		collA.model = User;
+		const collB = new Backbone.Relational.Collection();
+		collB.model = User;
 
-	// Similar to what happens when calling 'fetch' on collA, updating it, calling 'fetch' on collB
-	var name = 'User 1';
-	collA.add({ id: '/user/1/', name: name });
-	var user = collA.at(0);
-	equal(user.get('name'), name);
+		let name = 'User 1';
+		collA.add({ id: '/user/1/', name: name });
+		const user = collA.at(0);
+		expect(user.get('name')).toBe(name);
 
-	// The 'name' of 'user' is updated when adding a new hash to the collection
-	name = 'New name';
-	collA.add({ id: '/user/1/', name: name }, { merge: true });
-	var updatedUser = collA.at(0);
-	equal(user.get('name'), name);
-	equal(updatedUser.get('name'), name);
+		name = 'New name';
+		collA.add({ id: '/user/1/', name: name }, { merge: true });
+		const updatedUser = collA.at(0);
+		expect(user.get('name')).toBe(name);
+		expect(updatedUser.get('name')).toBe(name);
 
-	// The 'name' of 'user' is also updated when adding a new hash to another collection
-	name = 'Another new name';
-	collB.add({ id: '/user/1/', name: name, title: 'Superuser' }, { merge: true });
-	var updatedUser2 = collA.at(0);
-	equal(user.get('name'), name);
-	equal(updatedUser2.get('name'), name);
+		name = 'Another new name';
+		collB.add({ id: '/user/1/', name: name, title: 'Superuser' }, { merge: true });
+		const updatedUser2 = collA.at(0);
+		expect(user.get('name')).toBe(name);
+		expect(updatedUser2.get('name')).toBe(name);
 
-	//console.log( collA.models, collA.get( '/user/1/' ), user, updatedUser, updatedUser2 );
-	ok(collA.get('/user/1/') === updatedUser);
-	ok(collA.get('/user/1/') === updatedUser2);
-	ok(collB.get('/user/1/') === user);
-});
+		expect(collA.get('/user/1/')).toBe(updatedUser);
+		expect(collA.get('/user/1/')).toBe(updatedUser2);
+		expect(collB.get('/user/1/')).toBe(user);
+	});
 
-QUnit.test('Loading (fetching) a collection multiple times updates related models as well (HasOne)', function () {
-	var coll = new PersonCollection();
-	coll.add({ id: 'person-10', name: 'Person', user: { id: 'user-10', login: 'User' } });
+	it('Loading (fetching) a collection multiple times updates related models as well (HasOne)', () => {
+		const coll = new PersonCollection();
+		coll.add({ id: 'person-10', name: 'Person', user: { id: 'user-10', login: 'User' } });
 
-	var person = coll.at(0);
-	var user = person.get('user');
+		const person = coll.at(0);
+		const user = person.get('user');
 
-	equal(user.get('login'), 'User');
+		expect(user.get('login')).toBe('User');
 
-	coll.add({ id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } }, { merge: true });
+		coll.add({ id: 'person-10', name: 'New person', user: { id: 'user-10', login: 'New user' } }, { merge: true });
 
-	equal(person.get('name'), 'New person');
-	equal(user.get('login'), 'New user');
-});
+		expect(person.get('name')).toBe('New person');
+		expect(user.get('login')).toBe('New user');
+	});
 
-QUnit.test('Loading (fetching) a collection multiple times updates related models as well (HasMany)', function () {
-	var coll = new Backbone.Relational.Collection();
-	coll.model = Zoo;
+	it('Loading (fetching) a collection multiple times updates related models as well (HasMany)', () => {
+		const coll = new Backbone.Relational.Collection();
+		coll.model = Zoo;
 
-	// Create a 'zoo' with 1 animal in it
-	coll.add({ id: 'zoo-1', name: 'Zoo', animals: [{ id: 'lion-1', name: 'Mufasa' }] });
-	var zoo = coll.at(0);
-	var lion = zoo.get('animals').at(0);
+		coll.add({ id: 'zoo-1', name: 'Zoo', animals: [{ id: 'lion-1', name: 'Mufasa' }] });
+		const zoo = coll.at(0);
+		const lion = zoo.get('animals').at(0);
 
-	equal(lion.get('name'), 'Mufasa');
+		expect(lion.get('name')).toBe('Mufasa');
 
-	// Update the name of 'zoo' and 'lion'
-	coll.add({ id: 'zoo-1', name: 'Zoo Station', animals: [{ id: 'lion-1', name: 'Simba' }] }, { merge: true });
+		coll.add({ id: 'zoo-1', name: 'Zoo Station', animals: [{ id: 'lion-1', name: 'Simba' }] }, { merge: true });
 
-	equal(zoo.get('name'), 'Zoo Station');
-	equal(lion.get('name'), 'Simba');
-});
+		expect(zoo.get('name')).toBe('Zoo Station');
+		expect(lion.get('name')).toBe('Simba');
+	});
 
-QUnit.test('reset should use `merge: true` by default', function () {
-	var nodeList = new NodeList();
+	it('reset should use `merge: true` by default', () => {
+		const nodeList = new NodeList();
 
-	nodeList.add([{ id: 1 }, { id: 2, parent: 1 }]);
+		nodeList.add([{ id: 1 }, { id: 2, parent: 1 }]);
 
-	var node1 = nodeList.get(1),
-		node2 = nodeList.get(2);
+		const node1 = nodeList.get(1);
+		const node2 = nodeList.get(2);
 
-	ok(node2.get('parent') === node1);
-	ok(!node1.get('parent'));
+		expect(node2.get('parent')).toBe(node1);
+		expect(node1.get('parent')).toBeFalsy();
 
-	nodeList.reset([{ id: 1, parent: 2 }]);
+		nodeList.reset([{ id: 1, parent: 2 }]);
 
-	ok(node1.get('parent') === node2);
-});
+		expect(node1.get('parent')).toBe(node2);
+	});
 
-QUnit.test("Return values for add/remove/reset/set match plain Backbone's", function () {
-	var Car = Backbone.Relational.Model.extend(),
-		Cars = Backbone.Relational.Collection.extend({ model: Car }),
-		cars = new Cars();
+	it("Return values for add/remove/reset/set match plain Backbone's", () => {
+		const Car = Backbone.Relational.Model.extend();
+		const Cars = Backbone.Relational.Collection.extend({ model: Car });
+		const cars = new Cars();
 
-	ok(cars.add({ name: 'A' }) instanceof Car, 'Add one model');
+		expect(cars.add({ name: 'A' })).toBeInstanceOf(Car);
 
-	var added = cars.add([{ name: 'B' }, { name: 'C' }]);
-	ok(_.isArray(added), 'Added (an array of) two models');
-	ok(added.length === 2);
+		const added = cars.add([{ name: 'B' }, { name: 'C' }]);
+		expect(_.isArray(added)).toBe(true);
+		expect(added.length).toBe(2);
 
-	ok(cars.remove(cars.at(0)) instanceof Car, 'Remove one model');
-	var removed = cars.remove([cars.at(0), cars.at(1)]);
-	ok(_.isArray(removed), 'Remove (an array of) two models');
-	ok(removed.length === 2);
+		expect(cars.remove(cars.at(0))).toBeInstanceOf(Car);
+		const removed = cars.remove([cars.at(0), cars.at(1)]);
+		expect(_.isArray(removed)).toBe(true);
+		expect(removed.length).toBe(2);
 
-	ok(cars.reset({ name: 'D' }) instanceof Car, 'Reset with one model');
-	var reset = cars.reset([{ name: 'E' }, { name: 'F' }]);
-	ok(_.isArray(reset), 'Reset (an array of) two models');
-	ok(reset.length === 2);
-	ok(cars.length === 2);
+		expect(cars.reset({ name: 'D' })).toBeInstanceOf(Car);
+		const resetResult = cars.reset([{ name: 'E' }, { name: 'F' }]);
+		expect(_.isArray(resetResult)).toBe(true);
+		expect(resetResult.length).toBe(2);
+		expect(cars.length).toBe(2);
 
-	var e = cars.at(0),
-		f = cars.at(1);
+		const e = cars.at(0);
+		const f = cars.at(1);
 
-	ok(cars.set(e) instanceof Car, 'Set one model');
-	ok(_.isArray(cars.set([e, f])), 'Set (an array of) two models');
-	// Check removing `[]`
-	var result = cars.remove([]);
+		expect(cars.set(e)).toBeInstanceOf(Car);
+		expect(_.isArray(cars.set([e, f]))).toBe(true);
+		let result = cars.remove([]);
 
-	//have to also check if the result is an array since in backbone 1.3.1 Backbone.VERSION is incorrectly set to 1.2.3
-	if (semver.satisfies(Backbone.VERSION, '^1.3.1') || Array.isArray(result)) {
-		ok(result.length === 0, 'Removing `[]` is a noop (results in an empty array, no models removed)');
-	} else {
-		ok(result === false, "Removing `[]` is a noop (results in 'false', no models removed)");
-	}
-	ok(cars.length === 2, 'Still 2 cars');
-
-	// Check removing `null`
-	result = cars.remove(null);
-	ok(_.isUndefined(result), 'Removing `null` is a noop');
-	ok(cars.length === 2, 'Still 2 cars');
-
-	// Check setting to `[]`
-	result = cars.set([]);
-	ok(_.isArray(result) && !result.length, 'Set `[]` empties collection');
-	ok(cars.length === 0, 'All cars gone');
-
-	cars.set([e, f]);
-	ok(cars.length === 2, '2 cars again');
-
-	// Check setting `null`
-	// Backbone <= 1.6.1 returned `undefined`; 1.6.2+ returns the collection (for chaining).
-	// Either way, the no-op semantics (collection unchanged) are what matters.
-	var setNullResult = cars.set(null);
-	ok(_.isUndefined(setNullResult) || setNullResult === cars, 'Set `null` causes noop on collection');
-	ok(cars.length === 2, 'All cars still exist');
-});
-
-QUnit.test('add/remove/set (with `add`, `remove` and `merge` options)', function () {
-	var coll = new AnimalCollection();
-
-	/**
-	 * Add
-	 */
-	coll.add({ id: '1', species: 'giraffe' });
-
-	ok(coll.length === 1);
-
-	coll.add({ id: 1, species: 'giraffe' });
-
-	ok(coll.length === 1);
-
-	coll.add([
-		{
-			id: 1,
-			species: 'giraffe'
-		},
-		{
-			id: 2,
-			species: 'gorilla'
+		if (semver.satisfies(Backbone.VERSION, '^1.3.1') || Array.isArray(result)) {
+			expect(result.length).toBe(0);
+		} else {
+			expect(result).toBe(false);
 		}
-	]);
+		expect(cars.length).toBe(2);
 
-	var giraffe = coll.get(1),
-		gorilla = coll.get(2),
-		dolphin = new Animal({ species: 'dolphin' }),
-		hippo = new Animal({ id: 4, species: 'hippo' });
+		result = cars.remove(null);
+		expect(_.isUndefined(result)).toBe(true);
+		expect(cars.length).toBe(2);
 
-	ok(coll.length === 2);
+		result = cars.set([]);
+		expect(_.isArray(result) && !result.length).toBe(true);
+		expect(cars.length).toBe(0);
 
-	coll.add(dolphin);
+		cars.set([e, f]);
+		expect(cars.length).toBe(2);
 
-	ok(coll.length === 3);
+		const setNullResult = cars.set(null);
+		expect(_.isUndefined(setNullResult) || setNullResult === cars).toBe(true);
+		expect(cars.length).toBe(2);
+	});
 
-	// Update won't do anything
-	coll.add({ id: 1, species: 'giraffe', name: 'Long John' });
+	it('add/remove/set (with `add`, `remove` and `merge` options)', () => {
+		const coll = new AnimalCollection();
 
-	ok(!coll.get(1).get('name'), 'name=' + coll.get(1).get('name'));
+		coll.add({ id: '1', species: 'giraffe' });
+		expect(coll.length).toBe(1);
 
-	// Update with `merge: true` will update the animal
-	coll.add({ id: 1, species: 'giraffe', name: 'Long John' }, { merge: true });
+		coll.add({ id: 1, species: 'giraffe' });
+		expect(coll.length).toBe(1);
 
-	ok(coll.get(1).get('name') === 'Long John');
+		coll.add([
+			{ id: 1, species: 'giraffe' },
+			{ id: 2, species: 'gorilla' }
+		]);
 
-	/**
-	 * Remove
-	 */
-	coll.remove(1);
+		const giraffe = coll.get(1);
+		const gorilla = coll.get(2);
+		const dolphin = new Animal({ species: 'dolphin' });
+		const hippo = new Animal({ id: 4, species: 'hippo' });
 
-	ok(coll.length === 2);
-	ok(!coll.get(1), '`giraffe` removed from coll');
+		expect(coll.length).toBe(2);
 
-	coll.remove(dolphin);
+		coll.add(dolphin);
+		expect(coll.length).toBe(3);
 
-	ok(coll.length === 1);
-	ok(coll.get(2) === gorilla, 'Only `gorilla` is left in coll');
+		coll.add({ id: 1, species: 'giraffe', name: 'Long John' });
+		expect(coll.get(1).get('name')).toBeFalsy();
 
-	/**
-	 * Update
-	 */
-	coll.add(giraffe);
+		coll.add({ id: 1, species: 'giraffe', name: 'Long John' }, { merge: true });
+		expect(coll.get(1).get('name')).toBe('Long John');
 
-	// This shouldn't do much at all
-	var options = { add: false, merge: false, remove: false };
-	coll.set([dolphin, { id: 2, name: 'Silverback' }], options);
+		coll.remove(1);
 
-	ok(coll.length === 2);
-	ok(coll.get(2) === gorilla, '`gorilla` is left in coll');
-	ok(!coll.get(2).get('name'), '`gorilla` name not updated');
+		expect(coll.length).toBe(2);
+		expect(coll.get(1)).toBeFalsy();
 
-	// This should remove `giraffe`, add `hippo`, leave `dolphin`, and update `gorilla`.
-	options = { add: true, merge: true, remove: true };
-	coll.set([4, dolphin, { id: 2, name: 'Silverback' }], options);
+		coll.remove(dolphin);
 
-	ok(coll.length === 3);
-	ok(!coll.get(1), '`giraffe` removed from coll');
-	equal(coll.get(2), gorilla);
-	ok(!coll.get(3));
-	equal(coll.get(4), hippo);
-	equal(coll.get(dolphin), dolphin);
-	equal(gorilla.get('name'), 'Silverback');
-});
+		expect(coll.length).toBe(1);
+		expect(coll.get(2)).toBe(gorilla);
 
-QUnit.test('add/remove/set on a relation (with `add`, `remove` and `merge` options)', function () {
-	var zoo = new Zoo(),
-		animals = zoo.get('animals'),
-		a = new Animal({ id: 'a' }),
-		b = new Animal({ id: 'b' }),
-		c = new Animal({ id: 'c' });
+		coll.add(giraffe);
 
-	// The default is to call `Collection.update` without specifying options explicitly;
-	// the defaults are { add: true, merge: true, remove: true }.
-	zoo.set('animals', [a]);
-	ok(animals.length === 1, 'animals.length=' + animals.length + ' == 1?');
+		let options = { add: false, merge: false, remove: false };
+		coll.set([dolphin, { id: 2, name: 'Silverback' }], options);
 
-	zoo.set('animals', [a, b], { add: false, merge: true, remove: true });
-	ok(animals.length === 1, 'animals.length=' + animals.length + ' == 1?');
+		expect(coll.length).toBe(2);
+		expect(coll.get(2)).toBe(gorilla);
+		expect(coll.get(2).get('name')).toBeFalsy();
 
-	zoo.set('animals', [b], { add: false, merge: false, remove: true });
-	ok(animals.length === 0, 'animals.length=' + animals.length + ' == 0?');
+		options = { add: true, merge: true, remove: true };
+		coll.set([4, dolphin, { id: 2, name: 'Silverback' }], options);
 
-	zoo.set('animals', [{ id: 'a', species: 'a' }], { add: false, merge: true, remove: false });
-	ok(animals.length === 0, 'animals.length=' + animals.length + ' == 0?');
-	ok(a.get('species') === 'a', '`a` not added, but attributes did get merged');
+		expect(coll.length).toBe(3);
+		expect(coll.get(1)).toBeFalsy();
+		expect(coll.get(2)).toBe(gorilla);
+		expect(coll.get(3)).toBeFalsy();
+		expect(coll.get(4)).toBe(hippo);
+		expect(coll.get(dolphin)).toBe(dolphin);
+		expect(gorilla.get('name')).toBe('Silverback');
+	});
 
-	zoo.set('animals', [{ id: 'b', species: 'b' }], { add: true, merge: false, remove: false });
-	ok(animals.length === 1, 'animals.length=' + animals.length + ' == 1?');
-	ok(!b.get('species'), '`b` added, but attributes did not get merged');
+	it('add/remove/set on a relation (with `add`, `remove` and `merge` options)', () => {
+		const zoo = new Zoo();
+		const animals = zoo.get('animals');
+		const a = new Animal({ id: 'a' });
+		const b = new Animal({ id: 'b' });
+		const c = new Animal({ id: 'c' });
 
-	zoo.set('animals', [{ id: 'c', species: 'c' }], { add: true, merge: false, remove: true });
-	ok(animals.length === 1, 'animals.length=' + animals.length + ' == 1?');
-	ok(!animals.get('b'), 'b removed from animals');
-	ok(animals.get('c') === c, 'c added to animals');
-	ok(!c.get('species'), '`c` added, but attributes did not get merged');
+		zoo.set('animals', [a]);
+		expect(animals.length).toBe(1);
 
-	zoo.set('animals', [a, { id: 'b', species: 'b' }]);
-	ok(animals.length === 2, 'animals.length=' + animals.length + ' == 2?');
-	ok(b.get('species') === 'b', '`b` added, attributes got merged');
-	ok(!animals.get('c'), 'c removed from animals');
+		zoo.set('animals', [a, b], { add: false, merge: true, remove: true });
+		expect(animals.length).toBe(1);
 
-	zoo.set('animals', [{ id: 'c', species: 'c' }], { add: true, merge: true, remove: false });
-	ok(animals.length === 3, 'animals.length=' + animals.length + ' == 3?');
-	ok(c.get('species') === 'c', '`c` added, attributes got merged');
-});
+		zoo.set('animals', [b], { add: false, merge: false, remove: true });
+		expect(animals.length).toBe(0);
 
-QUnit.test('`merge` on a nested relation', function () {
-	var zoo = new Zoo({ id: 1, animals: [{ id: 'a' }] }),
-		animals = zoo.get('animals'),
-		a = animals.get('a');
+		zoo.set('animals', [{ id: 'a', species: 'a' }], { add: false, merge: true, remove: false });
+		expect(animals.length).toBe(0);
+		expect(a.get('species')).toBe('a');
 
-	ok(a.get('livesIn') === zoo, '`a` is in `zoo`');
+		zoo.set('animals', [{ id: 'b', species: 'b' }], { add: true, merge: false, remove: false });
+		expect(animals.length).toBe(1);
+		expect(b.get('species')).toBeFalsy();
 
-	// Pass a non-default option to a new model, with an existing nested model
-	var zoo2 = new Zoo({ id: 2, animals: [{ id: 'a', species: 'a' }] }, { merge: false });
+		zoo.set('animals', [{ id: 'c', species: 'c' }], { add: true, merge: false, remove: true });
+		expect(animals.length).toBe(1);
+		expect(animals.get('b')).toBeFalsy();
+		expect(animals.get('c')).toBe(c);
+		expect(c.get('species')).toBeFalsy();
 
-	ok(a.get('livesIn') === zoo2, '`a` is in `zoo2`');
-	ok(!a.get('species'), "`a` hasn't gotten merged");
-});
+		zoo.set('animals', [a, { id: 'b', species: 'b' }]);
+		expect(animals.length).toBe(2);
+		expect(b.get('species')).toBe('b');
+		expect(animals.get('c')).toBeFalsy();
 
-QUnit.test('pop', function () {
-	var zoo = new Zoo({
+		zoo.set('animals', [{ id: 'c', species: 'c' }], { add: true, merge: true, remove: false });
+		expect(animals.length).toBe(3);
+		expect(c.get('species')).toBe('c');
+	});
+
+	it('`merge` on a nested relation', () => {
+		const zoo = new Zoo({ id: 1, animals: [{ id: 'a' }] });
+		const animals = zoo.get('animals');
+		const a = animals.get('a');
+
+		expect(a.get('livesIn')).toBe(zoo);
+
+		const zoo2 = new Zoo({ id: 2, animals: [{ id: 'a', species: 'a' }] }, { merge: false });
+
+		expect(a.get('livesIn')).toBe(zoo2);
+		expect(a.get('species')).toBeFalsy();
+	});
+
+	it('pop', () => {
+		const zoo = new Zoo({
 			animals: [{ name: 'a' }]
-		}),
-		animals = zoo.get('animals');
+		});
+		const animals = zoo.get('animals');
 
-	var a = animals.pop(),
-		b = animals.pop();
+		const a = animals.pop();
+		const b = animals.pop();
 
-	ok(a && a.get('name') === 'a');
-	ok(typeof b === 'undefined');
-});
-
-QUnit.test("Adding a new model doesn't `merge` it onto itself", function () {
-	var TreeModel = Backbone.Relational.Model.extend({
-		relations: [
-			{
-				key: 'parent',
-				type: Backbone.Relational.HasOne
-			}
-		],
-
-		initialize: function (options) {
-			if (coll) {
-				coll.add(this);
-			}
-		}
+		expect(a && a.get('name')).toBe('a');
+		expect(typeof b).toBe('undefined');
 	});
 
-	var TreeCollection = Backbone.Relational.Collection.extend({
-		model: TreeModel
+	it("Adding a new model doesn't `merge` it onto itself", () => {
+		let coll;
+		const TreeModel = Backbone.Relational.Model.extend({
+			relations: [
+				{
+					key: 'parent',
+					type: Backbone.Relational.HasOne
+				}
+			],
+
+			initialize: function () {
+				if (coll) {
+					coll.add(this);
+				}
+			}
+		});
+
+		const TreeCollection = Backbone.Relational.Collection.extend({
+			model: TreeModel
+		});
+
+		coll = new TreeCollection();
+		let model = coll.set({ id: 'm2', name: 'new model', parent: 'm1' });
+
+		expect(model).toBeInstanceOf(TreeModel);
+		expect(coll.size()).toBe(1);
+
+		expect(model.get('parent')).toBe(null);
+		expect(model.get('name')).toBe('new model');
+		expect(model.getIdsToFetch('parent')).toEqual(['m1']);
+
+		model = coll.set({ id: 'm2', name: 'updated model', parent: 'm1' });
+		expect(model.get('name')).toBe('updated model');
+		expect(model.getIdsToFetch('parent')).toEqual(['m1']);
 	});
-
-	// Using `set` to add a new model, since this is what would be called when `fetch`ing model(s)
-	var coll = new TreeCollection(),
-		model = coll.set({ id: 'm2', name: 'new model', parent: 'm1' });
-
-	ok(model instanceof TreeModel);
-	ok(coll.size() === 1, 'One model in coll');
-
-	equal(model.get('parent'), null);
-	equal(model.get('name'), 'new model');
-	deepEqual(model.getIdsToFetch('parent'), ['m1']);
-
-	model = coll.set({ id: 'm2', name: 'updated model', parent: 'm1' });
-	equal(model.get('name'), 'updated model');
-	deepEqual(model.getIdsToFetch('parent'), ['m1']);
 });
