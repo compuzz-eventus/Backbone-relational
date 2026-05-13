@@ -167,7 +167,7 @@ export default [
 		}
 	},
 
-	// Source legacy : code 2011 dont les "violations" sont volontaires.
+	// Source : code ES5+ progressivement modernisé vers ES2022.
 	{
 		files: ['backbone-relational.js'],
 		rules: {
@@ -178,15 +178,18 @@ export default [
 			'new-cap': 'off',
 			// Shadowing intentionnel dans les closures de relations.
 			'no-shadow': 'off',
-			// `var` hoisting et réutilisation hors bloc — pattern ES5 voulu.
-			'block-scoped-var': 'off',
 			// `undefined` utilisé explicitement comme sentinel.
 			'no-undefined': 'off',
 			// Cosmétique : on l'a laissé en warning historiquement, mais
 			// `eslint --fix` (lint-staged) le ré-écrit mal et casse l'indent
 			// que Prettier vient d'appliquer. On désactive pour stopper
 			// l'auto-fix destructeur sur ce fichier legacy.
-			'no-else-return': 'off'
+			'no-else-return': 'off',
+			// Modernisation ES2022 : on bascule progressivement les `var` vers
+			// `const`/`let`. `--fix` les transforme automatiquement quand c'est
+			// sûr (pas de réassignation pour const, scope clair pour let).
+			'no-var': 'error',
+			'prefer-const': ['error', { destructuring: 'all' }]
 		}
 	},
 
