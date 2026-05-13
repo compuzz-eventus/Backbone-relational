@@ -1563,7 +1563,7 @@
 			 */
 			getAsync: function (attr, options) {
 				// Set default `options` for fetch
-				options = _.extend({ add: true, remove: false, refresh: false }, options);
+				options = { add: true, remove: false, refresh: false, ...options };
 
 				const dit = this;
 				let requests = [];
@@ -1677,7 +1677,7 @@
 			},
 
 			deferArray: function (deferArray) {
-				return Backbone.$.when.apply(null, deferArray);
+				return Backbone.$.when(...deferArray);
 			},
 
 			set: function (key, value, options) {
@@ -2229,7 +2229,7 @@
 	 */
 	const reset = (module.Collection.prototype.__reset = module.Collection.prototype.reset);
 	module.Collection.prototype.reset = function (models, options) {
-		options = _.extend({ merge: true }, options);
+		options = { merge: true, ...options };
 		const result = reset.call(this, models, options);
 
 		if (this.model.prototype instanceof module.Model) {
